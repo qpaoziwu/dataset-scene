@@ -367,7 +367,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--text)}
 <li>Weather data comes as hourly means, so fast changes such as a cloud passing over the sun are smoothed out.</li>
 <li>Cloud <em>amount</em> is real, cloud <em>positions</em> are not: there are no cloud shapes or moving cloud shadows.</li>
 <li>No twilight, clouds at night or city light: after sunset the light comes only from the Moon and a natural dark sky, as if far from any town.</li>
-<li>No ground: nothing below the horizon reflects light, so only the sky and the sun light the scene. A cloudy sky's colour is blended toward neutral rather than modelled.</li>
+<li>No ground: nothing below the horizon reflects light, so only the sky and the sun light the scene. The backdrop below the horizon is a gradient from the horizon colour, for looks only; it adds no light. A cloudy sky's colour is blended toward neutral rather than modelled.</li>
 </ul>
 </div>
 </section>
@@ -781,10 +781,12 @@ dat=new Float32Array(Wm*Hm*3);let Es=0;for(let j=0;j<Hm/2;j++)for(let i=0;i<Wm;i
 for(let c=0;c<3;c++)dat[q+c]=L.moon*nt.skyRGB[c]+L.dark;Es+=(L.moon+L.dark)*dv[1]*Math.sin(Math.PI*(j+0.5)/Hm)*(2*Math.PI/Wm)*(Math.PI/Hm);}
 s.skyE=Es;const Et=Es+nt.Elx*Math.max(0,md[1]);s.Eh=Et;s.Elux=Et;SUNK=1/Et;}
 for(let i=0;i<dat.length;i++)dat[i]*=SUNK;const b64=b64of(SUN.rgbe(dat,Wm,Hm));
-const name='sun#'+(++sunEnvN);await new Promise((res,rej)=>{setTimeout(()=>rej(new Error('sky timeout')),10000);const t=new BABYLON.HDRCubeTexture('data:application/octet-stream;base64,'+b64,scene,256,false,true,false,true,()=>{const old=Object.keys(ENV).filter(k=>k.startsWith('sun#'));ENV[name]={tex:t,name,b64,L0:1};SUNS=s;
-if(LM!=='hdri'){curEnv=ENV[name];useSunEnv();}old.slice(0,-2).forEach(k=>{if(ENV[k]&&ENV[k].tex!==scene.environmentTexture)ENV[k].tex.dispose();delete ENV[k];if(PT&&PT.dropEnv)PT.dropEnv(k);});res();},e=>rej(new Error(e||'sky')));});
+const bg=dat.slice(),h0=Hm/2-1;for(let j=Hm/2;j<Hm;j++){const e=90-(j+0.5)/Hm*180,f=0.2+0.8*Math.exp(e/10);for(let i=0;i<Wm;i++){const q=(j*Wm+i)*3,r=(h0*Wm+i)*3;bg[q]=bg[r]*f;bg[q+1]=bg[r+1]*f;bg[q+2]=bg[r+2]*f;}}const bgb64=b64of(SUN.rgbe(bg,Wm,Hm));
+const bgTex=await new Promise(res=>{const tb=new BABYLON.HDRCubeTexture('data:application/octet-stream;base64,'+bgb64,scene,256,true,false,false,false,()=>res(tb),()=>res(null));});
+const name='sun#'+(++sunEnvN);await new Promise((res,rej)=>{setTimeout(()=>rej(new Error('sky timeout')),10000);const t=new BABYLON.HDRCubeTexture('data:application/octet-stream;base64,'+b64,scene,256,false,true,false,true,()=>{const old=Object.keys(ENV).filter(k=>k.startsWith('sun#'));ENV[name]={tex:t,name,b64,L0:1,bg:bgTex,bgb64};SUNS=s;
+if(LM!=='hdri'){curEnv=ENV[name];useSunEnv();}old.slice(0,-2).forEach(k=>{if(ENV[k]&&ENV[k].bg)ENV[k].bg.dispose();if(ENV[k]&&ENV[k].tex!==scene.environmentTexture)ENV[k].tex.dispose();delete ENV[k];if(PT&&PT.dropEnv)PT.dropEnv(k);});res();},e=>rej(new Error(e||'sky')));});
 paintSun();}catch(e){console.error(e);toast('The sky could not be built');}finally{sunBusy=false;if(sunAgain){sunAgain=false;sunRebuild();}}}
-function useSunEnv(){kick(40,10);scene.executeWhenReady(()=>kick(12,12));scene.environmentTexture=curEnv.tex;if(sky)sky.dispose();sky=scene.createDefaultSkybox(curEnv.tex,true,60,0,false);if(sky){sky.layerMask=ALL|GIZ;sky.isPickable=false;}curMode='';applyLight();update();}
+function useSunEnv(){kick(40,10);scene.executeWhenReady(()=>kick(12,12));scene.environmentTexture=curEnv.tex;if(sky)sky.dispose();sky=scene.createDefaultSkybox(curEnv.bg||curEnv.tex,true,60,0,false);if(sky){sky.layerMask=ALL|GIZ;sky.isPickable=false;}curMode='';applyLight();update();}
 function applySun(){const s=SUNS;if(!s||!S)return;Object.values(rig).forEach(l=>l.setEnabled(false));Object.values(rigG).forEach(g=>{g.s.setEnabled(false);g.lb.setEnabled(false);});
 scene.environmentIntensity=1;const d=s.dir,up=d[1]>0&&s.src!=='none';sunL.setEnabled(up);sunL.direction=new BABYLON.Vector3(-d[0],-d[1],-d[2]);sunL.position=new BABYLON.Vector3(d[0]*3,d[1]*3,d[2]*3);sunL.intensity=up?s.E*SUNK:0;sunL.diffuse=BABYLON.Color3.FromArray(s.lRGB);sunL.specular=sunL.diffuse;sunL.shadowEnabled=FX.keysh;
 [sunG,sunLb,nLb,nLine].forEach(m=>m.setEnabled(true));sunG.setEnabled(up);sunLb.setEnabled(up&&s.src==='sun');moonLb.setEnabled(up&&s.src==='moon');sunG.material.emissiveColor=C3(s.src==='moon'?'#dfe6f0':'#ffd166');const gp=new BABYLON.Vector3(d[0]*1.3,Math.max(d[1],0)*1.3,d[2]*1.3);sunG.position=gp;sunLb.position=gp.add(new BABYLON.Vector3(0,0.07,0));moonLb.position=sunLb.position;
@@ -1023,7 +1025,7 @@ async function ensurePT(){if(PT||ptLoading)return;
 ptLoading=true;lsSet(PTK,{t:Date.now(),lite:PT_LITE});if(crashed)toast(PT_TINY?'Retrying path tracing at the smallest memory setting':'Retrying path tracing in low-memory mode');setStatus('Loading the path tracer (three.js)…','busy');
 try{const [T,P,R]=await ptMods();setStatus('Preparing the scene for path tracing…','busy');
 cPT.addEventListener('webglcontextlost',e=>{e.preventDefault();ptLost();},{once:true});
-const renderer=new T.WebGLRenderer({canvas:cPT,antialias:false,alpha:false,powerPreference:PT_LITE?'low-power':'high-performance'});renderer.toneMapping=T.NeutralToneMapping;renderer.outputColorSpace=T.SRGBColorSpace;
+const renderer=new T.WebGLRenderer({canvas:cPT,antialias:false,alpha:false,preserveDrawingBuffer:/[?&]capture=1/.test(location.search),powerPreference:PT_LITE?'low-power':'high-performance'});renderer.toneMapping=T.NeutralToneMapping;renderer.outputColorSpace=T.SRGBColorSpace;
 // every map is packed into one texture array at a single size; the path-tracing copies keep only colour, emission and roughness/metal maps (~55), at 1024 px (phones drop the props' roughness/metal maps to fit)
 const pt=new P.WebGLPathTracer(renderer);const TS_=PT_TINY?512:1024;pt.textureSize.set(TS_,TS_);const TL=PT_LITE?4:2;pt.tiles.set(TL,TL);pt.bounces=PT_TINY?2:PT_LITE?3:8;pt.transmissiveBounces=PT_LITE?3:10;pt.filterGlossyFactor=0.4;pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.dynamicLowRes=true;pt.lowResScale=0.25;
 const tS=new T.Scene();const cam=new P.PhysicalCamera(40,1,0.05,40);cam.filmGauge=36;
@@ -1047,9 +1049,9 @@ const mc=new Map();const tmat=bm=>{let m=mc.get(bm);if(!m){m=new T.MeshPhysicalM
 const a=bm.albedoColor;m.color.setRGB(a.r,a.g,a.b);m.map=ttex(bm.albedoTexture);m.normalMap=ttex(bm.bumpTexture);if(bm.bumpTexture)m.normalScale.set(bm.bumpTexture.level,bm.bumpTexture.level);const orm=ttex(bm.metallicTexture);m.roughnessMap=orm;m.metalnessMap=orm;
 m.metalness=bm.metallic??0;m.roughness=Math.min(1,bm.roughness??1);m.ior=bm.indexOfRefraction||1.5;m.transmission=bm._t||0;m.thickness=0;
 m.emissiveMap=ttex(bm.emissiveTexture);const e=bm.emissiveColor||{r:0,g:0,b:0};m.emissive.setRGB(e.r,e.g,e.b);m.emissiveIntensity=bm.emissiveIntensity??1;m.needsUpdate=true;return m;};
-const envC={};const envTex=name=>{const ck=name+ENVFIX.mirror;if(envC[ck])return envC[ck];const e=ENV[name];if(!e)return null;const bin=atob(e.b64),u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+const envC={};const envTex=name=>{const bgk=name.startsWith('bg:'),nm=bgk?name.slice(3):name;const ck=name+ENVFIX.mirror;if(envC[ck])return envC[ck];const e=ENV[nm];if(!e)return null;const bin=atob(bgk?e.bgb64:e.b64),u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
 const d=new R.RGBELoader().setDataType(T.FloatType).parse(u8.buffer);if(ENVFIX.mirror){const w=d.width,h=d.height,a=d.data;for(let y=0;y<h;y++)for(let x=0;x<w/2;x++)for(let c=0;c<4;c++){const i=(y*w+x)*4+c,j=(y*w+w-1-x)*4+c,t=a[i];a[i]=a[j];a[j]=t;}}const t=new T.DataTexture(d.data,d.width,d.height,T.RGBAFormat,T.FloatType);t.mapping=T.EquirectangularReflectionMapping;t.colorSpace=T.LinearSRGBColorSpace;t.minFilter=t.magFilter=T.LinearFilter;t.generateMipmaps=false;t.flipY=true;t.needsUpdate=true;envC[ck]=t;return t;};
-applyScreens();PT={T,P,renderer,pt,tS,cam,groups,pairs,tm,lights,tmat,envTex,ready:false,dropEnv:k=>{const ck=k+ENVFIX.mirror;if(envC[ck]){envC[ck].dispose();delete envC[ck];}}};ptResize();['scene','mat','light','env','cam'].forEach(ptMark);if(!ptLoop){ptLoop=true;requestAnimationFrame(ptFrame);}ptShow();}
+applyScreens();PT={T,P,renderer,pt,tS,cam,groups,pairs,tm,lights,tmat,envTex,ready:false,dropEnv:k=>{[k,'bg:'+k].forEach(q=>{const ck=q+ENVFIX.mirror;if(envC[ck]){envC[ck].dispose();delete envC[ck];}});}};ptResize();['scene','mat','light','env','cam'].forEach(ptMark);if(!ptLoop){ptLoop=true;requestAnimationFrame(ptFrame);}ptShow();}
 catch(e){console.error(e);setStatus('The path tracer could not load; back to real-time','');rend='rt';paintModes();ptRes();}
 ptLoading=false;}
 // iOS drops a WebGL context it judges too heavy instead of crashing the tab: rebuild once at the lightest setting, then fall back honestly
@@ -1061,7 +1063,7 @@ PT_TINY=true;toast('The GPU reset; path tracing continues at a lighter setting')
 function ptLightsEnv(){const {tS,lights,envTex}=PT;const sunOn=LM!=='hdri'&&!!SUNS;
 ['key','fill','rim'].forEach(k=>{const b=rig[k],l=lights[k];l.position.set(b.position.x,b.position.y,b.position.z);const t=V(...S.poi);l.target.position.set(t.x,t.y,t.z);l.color.setRGB(b.diffuse.r,b.diffuse.g,b.diffuse.b);l.intensity=b.intensity/BAB_K;l.angle=b.angle/2;l.penumbra=PEN;l.decay=2;l.castShadow=true;l.visible=!sunOn;l.updateMatrixWorld();l.target.updateMatrixWorld();});
 const sp=lights.sun;if(sunOn){const d=SUNS.dir;sp.position.set(d[0]*10,d[1]*10,d[2]*10);sp.target.position.set(0,0,0);sp.color.setRGB(...SUNS.lRGB);sp.intensity=d[1]>0&&SUNS.src!=='none'?SUNS.E*SUNK:0;sp.visible=sp.intensity>0;}else sp.visible=false;sp.updateMatrixWorld();sp.target.updateMatrixWorld();
-const ei=sunOn?1:S.strength*HDRI_SHARE;const et=curEnv&&envTex(curEnv.name);tS.environment=et;tS.background=et;tS.environmentRotation.set(0,ENVFIX.rotY,0);tS.backgroundRotation.set(0,ENVFIX.rotY,0);tS.environmentIntensity=ei;tS.backgroundIntensity=ei;}
+const ei=sunOn?1:S.strength*HDRI_SHARE;const et=curEnv&&envTex(curEnv.name);const bt=sunOn&&curEnv&&curEnv.bgb64?envTex('bg:'+curEnv.name):et;tS.environment=et;tS.background=bt;tS.environmentRotation.set(0,ENVFIX.rotY,0);tS.backgroundRotation.set(0,ENVFIX.rotY,0);tS.environmentIntensity=ei;tS.backgroundIntensity=ei;}
 function ptSync(){const {T,pt,tS,cam,groups,pairs,lights,tmat,envTex}=PT;const need=new Set(ptDirty);ptDirty.clear();
 if(need.has('scene')||need.has('mat')||need.has('light')||need.has('env')||!PT.ready){
 OB.forEach((o,i)=>{const g=groups[i];if(o.hung){if(g.parent!==groups[0])groups[0].add(g);const h=HANG[o.mi-1];g.position.set(...h.p);g.quaternion.set(...h.q);}else{if(g.parent!==tS)tS.add(g);g.position.set(o.x,0,-o.y);g.rotation.set(0,o.yaw,0);}});
