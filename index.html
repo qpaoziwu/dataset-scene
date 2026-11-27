@@ -490,7 +490,9 @@ const camR=new BABYLON.FreeCamera('render',new BABYLON.Vector3(0,1,1),scene);cam
 engine.inputElement=cMain;mainCam.attachControl(cMain,false);
 // wheel and touch on the overview orbit the camera, never the page
 cMain.addEventListener('wheel',e=>e.preventDefault(),{passive:false});cMain.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
-const mainView=engine.registerView(cMain,mainCam);const camView=engine.registerView(cCam,camR);
+const mainView=engine.registerView(cMain,mainCam);
+// Babylon resizes each view canvas to its CSS size × device pixel ratio; the overview keeps its own, lower resolution
+mainView.customResize=c=>{const w=Math.max(1,Math.round(c.clientWidth*DPR_MAIN)),h=Math.max(1,Math.round(c.clientHeight*DPR_MAIN));if(c.width!==w||c.height!==h){c.width=w;c.height=h;}const wc=engine.getRenderingCanvas();if(wc.width!==w||wc.height!==h)engine.setSize(w,h);};const camView=engine.registerView(cCam,camR);
 // render on demand: each canvas renders only for a few frames after something changes (the IBL shadows need ~40 to converge)
 let dCam=0,dMain=0,looping=false,stageVis=true;
 const ptCovers=()=>!!PT&&rend==='pt'&&mode==='rgb';
