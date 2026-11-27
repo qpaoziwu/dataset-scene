@@ -262,7 +262,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--text)}
 <div class="viewer">
 <div class="bar" id="bar">
 <div class="grp"><span class="glab">Renderer</span><div class="segs" id="rend" role="group" aria-label="Renderer"></div></div>
-<div class="grp"><span class="glab">Camera</span><div class="step" role="group" aria-label="Camera view"><button type="button" id="vPrev" aria-label="Previous view">‹</button><output id="v_view">8 / 50</output><button type="button" id="vNext" aria-label="Next view">›</button></div></div>
+<div class="grp"><span class="glab">Camera</span><div class="step" role="group" aria-label="Camera view"><button type="button" id="vPrev" aria-label="Previous view">‹</button><output id="v_view">6 / 50</output><button type="button" id="vNext" aria-label="Next view">›</button></div></div>
 <div class="grp"><span class="glab">Output map <em>· pick one of 5</em></span><div class="segs" id="modes" role="group" aria-label="Output map"></div><select id="modeSel" class="sel" aria-label="Output map"></select></div>
 </div>
 <div id="camBox" tabindex="0" aria-label="Rendered camera view. Use the left and right arrow keys or swipe to change view.">
@@ -277,9 +277,9 @@ footer a{text-decoration:none}footer a:hover{color:var(--text)}
 <aside class="panel">
 <div class="card"><h2>Scene <span class="mono">1024 × 1024 px</span></h2>
 <div class="ctl">
-<div class="row"><span class="lab">Scene seed</span><div class="step"><button type="button" id="sPrev" aria-label="Previous scene">−</button><output id="v_seed">3</output><button type="button" id="sNext" aria-label="Next scene">+</button></div><button type="button" class="btn" id="shuffle">Shuffle</button></div>
-<input type="range" id="seed" min="0" max="19" step="1" value="3" hidden>
-<div class="rng"><label for="view">Camera view <output id="v_view2">8 / 50</output></label><input type="range" id="view" min="1" max="50" step="1" value="8"></div>
+<div class="row"><span class="lab">Scene seed</span><div class="step"><button type="button" id="sPrev" aria-label="Previous scene">−</button><output id="v_seed">9</output><button type="button" id="sNext" aria-label="Next scene">+</button></div><button type="button" class="btn" id="shuffle">Shuffle</button></div>
+<input type="range" id="seed" min="0" max="19" step="1" value="9" hidden>
+<div class="rng"><label for="view">Camera view <output id="v_view2">6 / 50</output></label><input type="range" id="view" min="1" max="50" step="1" value="6"></div>
 <div class="rng"><label for="ev">Exposure <output id="v_ev"></output></label><input type="range" id="ev" min="-2" max="2" step="0.1" value="0"></div>
 </div></div>
 <details class="card" id="ovCard" open><summary>Scene overview <span class="mono">drag to orbit</span></summary><canvas id="cMain"></canvas></details>
