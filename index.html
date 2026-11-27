@@ -388,7 +388,7 @@ const SOURCES=[
 $('srcList').innerHTML=SOURCES.map(([t,u])=>`<li>${t}.${u?` <a href="${u}" target="_blank" rel="noopener">${u.replace(/^https?:\/\//,'')}</a>`:''}</li>`).join('');
 if(!window.BABYLON){$('legend').textContent='Babylon.js could not load.';$('loadT').textContent='The 3D engine could not load. Check the connection and reload.';}else{
 lt('engine','Babylon.js engine','7 MB');ltd('engine');
-const W=1024,SW=36,DPR=Math.min(1.5,devicePixelRatio),DPR_MAIN=Math.min(1.25,devicePixelRatio)*0.5; // scene overview renders at half resolution
+const W=1024,SW=36,DPR=Math.min(1.5,devicePixelRatio),DPR_MAIN=devicePixelRatio*0.5; // scene overview renders at half the screen's resolution
 const COL={obj:'#ff5a36',world:'#6cb8ff',cam:'#c4f04d',img:'#ffd166'};
 const TEX=window.DS_ASSETS||'https://cdn.jsdelivr.net/gh/qpaoziwu/dataset-scene@9e0473f57bd29c2454129645c00aaee6abff0de7/assets/';const PHC='https://dl.polyhaven.org/file/ph-assets/';
 const HDRS=['royal_esplanade_1k','venice_sunset_1k','pedestrian_overpass_1k','quarry_01_1k'];
