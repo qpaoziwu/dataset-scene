@@ -737,7 +737,8 @@ const SCR={bab:[],three:[]};let scrT=0;
 function screenGain(){if(typeof LM==='undefined'||LM==='hdri'||!SUNS)return null;return SUNS.night?SUNK:SUNK/110;} // day: radiance units are W/m²·sr, ~110 lm/W
 function applyScreens(){const g=screenGain();SCR.bab.forEach(([m,L])=>{m.emissiveIntensity=g==null?1:L*g;});SCR.three.forEach(([m,L])=>{m.emissiveIntensity=g==null?1:L*g;});if(SCR.three.length&&PT){clearTimeout(scrT);scrT=setTimeout(()=>ptMark('scr'),400);}kick(40,10);}
 // ---------- Sun & sky from place, date and time (clear-sky models or measured weather)
-const LMODES=[['hdri','HDRI + rig'],['wx','Weather data']]; // clear sky stays as the fallback when weather data is missinglet LM='hdri';
+// clear sky stays as the fallback when weather data is missing
+const LMODES=[['hdri','HDRI + rig'],['wx','Weather data']];let LM='hdri';
 const PLACES=[['Hong Kong','Asia/Hong_Kong',22.2783,114.1747,10],['Apple Park, Cupertino','America/Los_Angeles',37.3349,-122.009,50],['London','Europe/London',51.5074,-0.1278,11],['New York','America/New_York',40.7128,-74.006,10],['Tokyo','Asia/Tokyo',35.6762,139.6503,40],['Singapore','Asia/Singapore',1.3521,103.8198,15],['Sydney','Australia/Sydney',-33.8688,151.2093,3],['Reykjavík','Atlantic/Reykjavik',64.1466,-21.9426,20]];
 const SUNP={place:0,lat:22.2783,lon:114.1747,alt:10,tz:'Asia/Hong_Kong',date:'2026-11-28',time:'06:48',aod:0.1,w:1.5}; // default = the preview still
 const pad2=n=>String(n).padStart(2,'0');
