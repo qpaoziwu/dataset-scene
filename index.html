@@ -390,7 +390,7 @@ if(!window.BABYLON){$('legend').textContent='Babylon.js could not load.';$('load
 lt('engine','Babylon.js engine','7 MB');ltd('engine');
 const W=1024,SW=36,DPR=Math.min(1.5,devicePixelRatio),DPR_MAIN=devicePixelRatio*0.5; // scene overview renders at half the screen's resolution
 const COL={obj:'#ff5a36',world:'#6cb8ff',cam:'#c4f04d',img:'#ffd166'};
-const TEX=window.DS_ASSETS||'https://cdn.jsdelivr.net/gh/qpaoziwu/dataset-scene@9e0473f57bd29c2454129645c00aaee6abff0de7/assets/';const PHC='https://dl.polyhaven.org/file/ph-assets/';
+const TEX=window.DS_ASSETS||'https://cdn.jsdelivr.net/gh/qpaoziwu/dataset-scene@74b6e92461c90597c8d796895ad7886ff8e61959/assets/';const PHC='https://dl.polyhaven.org/file/ph-assets/';
 const HDRS=['royal_esplanade_1k','venice_sunset_1k','pedestrian_overpass_1k','quarry_01_1k'];
 BABYLON.Tools.PreprocessUrl=u=>u.replace('https://assets.babylonjs.com/core/blue_noise/',TEX); // IBL shadows' blue-noise texture, bundled (CC0)
 const HDRI_SHARE=0.5;
@@ -625,12 +625,12 @@ RES.phone={k:'phone',lut:null,set:null,m:1,r:fr?fr.roughness:0.27,ior:1.5,t:0,co
 updateCasters();paintSlots();ptMark('scene');update();ltd('phone');}).catch(e=>{console.error(e);ltd('phone');setStatus('iPhone model could not load','');});
 // mug holder + six mugs: one file, one instance per object; vision pro: one instance
 const instInto=(ct,o,keep)=>{const inst=ct.instantiateModelsToScene(n=>n+'~'+o.inst,false);inst.rootNodes.forEach(n=>{n.parent=o.M;n.getChildMeshes(false).forEach(me=>{if(keep&&me.name!==keep+'~'+o.inst){me.dispose();return;}if(!me.getTotalVertices())return;o.addMesh(me,me.material,me.position.x,me.position.y,me.position.z,null);});});};
-lt('holder','Mug holder + 6 mugs','0.8 MB');
-const HOLDER=fetchBytes(TEX+'holder.glb',f=>ltp('holder',f),758372);
+lt('holder','Mug holder + 6 mugs','1.0 MB');
+const HOLDER=fetchBytes(TEX+'holder.glb',f=>ltp('holder',f),952872);
 HOLDER.then(bytes=>BABYLON.LoadAssetContainerAsync(bytes,scene,{pluginExtension:'.glb'})).then(ct=>{
 if(ibl)try{ibl.addShadowReceivingMaterial(ct.materials);}catch(e){}
 OB.forEach(o=>{if(o.name==='mug_holder')instInto(ct,o,'holder');if(o.name==='mug')instInto(ct,o,'mug_'+o.mi);});
-RES.holder={k:'holder',lut:null,set:null,m:0,r:0.35,ior:1.5,t:0,col:[0.62,0.6,0.58],note:'enamelled steel mugs on a powder-coated stand',model:'glTF model · stand + 6 mugs split from one mesh, 1024 px maps'};
+RES.holder={k:'holder',lut:null,set:null,m:0,r:0.35,ior:1.5,t:0,col:[0.62,0.6,0.58],note:'enamelled steel mugs on a powder-coated stand',model:'glTF model · stand + 6 mugs split from one mesh, 2048 px colour map'};
 updateCasters();paintSlots();ptMark('scene');update();ltd('holder');}).catch(e=>{console.error(e);ltd('holder');setStatus('Mug holder could not load','');});
 lt('avp','Vision Pro model','3.4 MB');
 const VISION=fetchBytes(TEX+'visionpro.glb',f=>ltp('avp',f),3357700);
@@ -736,8 +736,8 @@ async function ensurePT(){if(PT||ptLoading)return;
 ptLoading=true;lsSet(PTK,{t:Date.now(),lite:PT_LITE});if(crashed)toast(PT_TINY?'Retrying path tracing at the smallest memory setting':'Retrying path tracing in low-memory mode');setStatus('Loading the path tracer (three.js)…','busy');
 try{const [T,P,R]=await ptMods();setStatus('Preparing the scene for path tracing…','busy');
 const renderer=new T.WebGLRenderer({canvas:cPT,antialias:false,alpha:false,powerPreference:PT_LITE?'low-power':'high-performance'});renderer.toneMapping=T.NeutralToneMapping;renderer.outputColorSpace=T.SRGBColorSpace;
-// every material texture is packed into one texture array at textureSize: 1024 px × ~90 maps was ~380 MB of GPU memory, more than a phone tab may use
-const pt=new P.WebGLPathTracer(renderer);const TS_=PT_TINY?128:PT_LITE?256:512;pt.textureSize.set(TS_,TS_);pt.tiles.set(PT_LITE?3:2,PT_LITE?3:2);pt.bounces=PT_TINY?3:PT_LITE?4:8;pt.transmissiveBounces=PT_LITE?4:10;pt.filterGlossyFactor=0.4;pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.dynamicLowRes=true;pt.lowResScale=0.25;
+// every map is packed into one texture array at a single size; the path-tracing copies keep only colour, emission and roughness/metal maps (~55), at 1024 px on desktop and 512 px on phones
+const pt=new P.WebGLPathTracer(renderer);const TS_=PT_TINY?256:PT_LITE?512:1024;pt.textureSize.set(TS_,TS_);pt.tiles.set(PT_LITE?3:2,PT_LITE?3:2);pt.bounces=PT_TINY?3:PT_LITE?4:8;pt.transmissiveBounces=PT_LITE?4:10;pt.filterGlossyFactor=0.4;pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.dynamicLowRes=true;pt.lowResScale=0.25;
 const tS=new T.Scene();const cam=new P.PhysicalCamera(40,1,0.05,40);cam.filmGauge=36;
 const groups=OB.map(o=>{const g=new T.Group();tS.add(g);return g;});
 const shape=d=>new T.Shape(rrect(d.w,d.d,d.r).map(p=>new T.Vector2(p[0],p[1])));
