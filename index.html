@@ -720,7 +720,7 @@ let PT=null,ptLoading=false;const ptDirty=new Set();const MAXS=1024;
 function ptMark(w){ptDirty.add(w);}
 const ptWanted=()=>rend==='pt'&&mode==='rgb';
 function ptShow(){const on=ptWanted();cPT.style.visibility=on&&PT?'visible':'hidden';$('fxSet').disabled=rend==='pt';if(on&&!PT)ensurePT();if(!on){setStatus('','');setProg(0);}kick(40,2);drawOv();paintLegend();}
-function ptResize(){const CS=Math.max(120,Math.round($('camBox').clientWidth));PT.renderer.setPixelRatio(PT_LITE?1:Math.min(DPR,1.5));PT.renderer.setSize(CS,CS,false);ptMark('cam');}
+function ptResize(){const CS=Math.max(120,Math.round($('camBox').clientWidth));PT.renderer.setPixelRatio(PT_LITE?Math.min(devicePixelRatio,2):Math.min(DPR,1.5));PT.renderer.setSize(CS,CS,false);ptMark('cam');}
 let ptRes=null;const ptP=new Promise(r=>ptRes=r);const ptReadyP=()=>ptP;
 const ptMods=()=>Promise.all([import('three'),import('three-gpu-pathtracer'),import('three/examples/jsm/loaders/RGBELoader.js')]);
 function idlePreload(){if(navigator.connection&&navigator.connection.saveData)return;const go=()=>{const pre=document.createElement('span');pre.id='pre';pre.innerHTML='<span class="spin"></span>Preloading path tracer';$('legend').after(pre);ptMods().then(()=>{pre.innerHTML=ICON_OK+'Path tracer ready';setTimeout(()=>pre.remove(),2500);}).catch(()=>pre.remove());};setTimeout(()=>window.requestIdleCallback?requestIdleCallback(go,{timeout:4000}):go(),1500);}
@@ -734,7 +734,7 @@ ptLoading=true;lsSet(PTK,{t:Date.now(),lite:PT_LITE});if(crashed)toast('Retrying
 try{const [T,P,R]=await ptMods();setStatus('Preparing the scene for path tracing…','busy');
 const renderer=new T.WebGLRenderer({canvas:cPT,antialias:false,alpha:false,powerPreference:PT_LITE?'low-power':'high-performance'});renderer.toneMapping=T.NeutralToneMapping;renderer.outputColorSpace=T.SRGBColorSpace;
 // every material texture is packed into one texture array at textureSize: 1024 px × ~90 maps was ~380 MB of GPU memory, more than a phone tab may use
-const pt=new P.WebGLPathTracer(renderer);pt.textureSize.set(PT_LITE?256:512,PT_LITE?256:512);pt.tiles.set(PT_LITE?3:2,PT_LITE?3:2);pt.bounces=PT_LITE?4:8;pt.transmissiveBounces=PT_LITE?4:10;if(PT_LITE)pt.renderScale=0.6;pt.filterGlossyFactor=0.4;pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.dynamicLowRes=true;pt.lowResScale=0.25;
+const pt=new P.WebGLPathTracer(renderer);pt.textureSize.set(PT_LITE?256:512,PT_LITE?256:512);pt.tiles.set(PT_LITE?3:2,PT_LITE?3:2);pt.bounces=PT_LITE?4:8;pt.transmissiveBounces=PT_LITE?4:10;pt.filterGlossyFactor=0.4;pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.dynamicLowRes=true;pt.lowResScale=0.25;
 const tS=new T.Scene();const cam=new P.PhysicalCamera(40,1,0.05,40);cam.filmGauge=36;
 const groups=OB.map(o=>{const g=new T.Group();tS.add(g);return g;});
 const shape=d=>new T.Shape(rrect(d.w,d.d,d.r).map(p=>new T.Vector2(p[0],p[1])));
