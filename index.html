@@ -353,6 +353,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--text)}
 <li><b>How strong is the light?</b> <em>Clear sky:</em> the Ineichen–Perez model turns air mass, altitude and haze (aerosols and water vapour) into direct and diffuse sunlight in W/m². <em>Weather data:</em> Open-Meteo's hourly direct and diffuse sunlight for that spot replaces the model: the ERA5 reanalysis for past dates, forecast models for recent days and the next two weeks. Values are interpolated to the minute, and CAMS aerosol levels set the haze.</li>
 <li><b>What does the sky look like?</b> A clear sky follows the CIE standard clear-sky shape. With weather data, the split between direct and diffuse light picks one of eight Perez all-weather sky types, from clear to overcast. The colours of sun and sky come from NREL's SPCTRL2 spectral model, so a low sun turns warm.</li>
 <li><b>Bake it.</b> The sky becomes a 512 × 256 HDR map, scaled so it delivers exactly the measured diffuse light onto the table. The sun becomes a directional light carrying the direct light. Both renderers read the same file, and the exposure is metered from the total, like a camera.</li>
+<li><b>After sunset, the Moon.</b> The Moon's position (a lunar theory with its main perturbations and topocentric parallax, within 0.08° of astropy) and its phase set the moonlight. Its brightness and the glow it scatters across the sky follow the Krisciunas &amp; Schaefer 1991 moonlight model, on top of a natural dark sky of 21.6 mag/arcsec², with the same haze as the daytime model.</li>
 <li><b>Step the clock.</b> Each time step gives a new sun and sky and a new frame. The light parameters (sun angles, W/m², sky model, data source) are saved in every view's JSON next to the camera, so each image says what light it was made under.</li>
 </ol>
 <h3>What a timeline gives a dataset</h3>
@@ -365,8 +366,8 @@ footer a{text-decoration:none}footer a:hover{color:var(--text)}
 <ul class="steps">
 <li>Weather data comes as hourly means, so fast changes such as a cloud passing over the sun are smoothed out.</li>
 <li>Cloud <em>amount</em> is real, cloud <em>positions</em> are not: there are no cloud shapes or moving cloud shadows.</li>
-<li>Daylight only. No twilight, moonlight or city light; after sunset the frame goes dark.</li>
-<li>The ground is a uniform 20% grey, and a cloudy sky's colour is blended toward neutral rather than modelled.</li>
+<li>No twilight, clouds at night or city light: after sunset the light comes only from the Moon and a natural dark sky, as if far from any town.</li>
+<li>No ground: nothing below the horizon reflects light, so only the sky and the sun light the scene. A cloudy sky's colour is blended toward neutral rather than modelled.</li>
 </ul>
 </div>
 </section>
@@ -377,7 +378,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--text)}
 <div id="refs">Loading…</div>
 </section>
 
-<p class="note">The objects and their fine detail maps are generated in the browser. Tabletop textures are Poly Haven scans; the phones are a supplied glTF model with its own materials. Boxes are computed from each object's 3D box corners, so they run slightly looser than mask-based COCO boxes. The path tracer ignores displacement and screen-space effects; it computes shadows, occlusion and reflections directly. In Sun &amp; sky mode the sun's direction, strength and colour and the sky's brightness pattern come from published solar and daylight models, or from measured hourly weather; ratios between sun, sky and ground are physical and the exposure is metered.</p>
+<p class="note">The objects and their fine detail maps are generated in the browser. Tabletop textures are Poly Haven scans; the phones are a supplied glTF model with its own materials. Boxes are computed from each object's 3D box corners, so they run slightly looser than mask-based COCO boxes. The path tracer ignores displacement and screen-space effects; it computes shadows, occlusion and reflections directly. In Sun &amp; sky mode the sun's direction, strength and colour and the sky's brightness pattern come from published solar and daylight models, or from measured hourly weather, and after sunset from the Moon's position, phase and a moonlight model; ratios between sun, sky and ground are physical and the exposure is metered.</p>
 
 <footer><a class="wordmark" href="/">RICHARD HUI</a><span><a href="mailto:richrdhw@gmail.com">richrdhw@gmail.com</a> · <a href="https://www.richardhui.com/#work" target="_blank" rel="noopener">More work ↗</a></span></footer>
 </div>
@@ -413,6 +414,7 @@ const SOURCES=[
 ['Clear-sky shape: CIE standard general sky type 12 (ISO 15469:2004 / CIE S 011/E:2003)','https://www.iso.org/standard/38608.html'],
 ['Weather sky shape: Perez, Seals & Michalsky 1993 all-weather sky; coefficients and bin rules from Radiance gendaylit','https://github.com/NREL/Radiance/blob/master/src/gen/gendaylit.c'],
 ['Sun and sky colour: SPCTRL2 clear-sky spectra (Bird & Riordan 1986, NREL), integrated with the CIE 1931 2° observer','https://pvlib-python.readthedocs.io/en/stable/reference/generated/pvlib.spectrum.spectrl2.html'],
+['Night: Moon position from Schlyter\'s lunar theory (12 longitude, 5 latitude, 2 distance terms) with topocentric parallax, checked against astropy to 0.08° in elevation; moonlight and moonlit sky from Krisciunas & Schaefer 1991 (PASP 103, 1033); dark sky 21.6 mag/arcsec² converted with Garstang 1989','https://ui.adsabs.harvard.edu/abs/1991PASP..103.1033K'],
 ['Weather data by Open-Meteo.com (CC BY 4.0): hourly direct normal and diffuse irradiance and cloud cover (ERA5 archive or forecast models); aerosol depth from CAMS','https://open-meteo.com/'],
 
 ['Physically Based: a database of measured PBR values (CC0), API v2','https://api.physicallybased.info/v2/materials'],
@@ -435,7 +437,7 @@ const SOURCES=[
 ['Microsoft, Announcing Babylon.js 8.0 (IBL shadows)','https://blogs.windows.com/windowsdeveloper/2025/03/27/announcing-babylon-js-8-0/'],
 ['Babylon.js IblShadowsRenderPipeline API (type definitions)','https://app.unpkg.com/@babylonjs/core@9.18.0/files/Rendering/IBLShadows/iblShadowsRenderPipeline.pure.d.ts'],
 ['Apple iPhone 18 Pro Max (Burgundy, 2026), 3D model on Sketchfab; licence as stated on the model page','https://sketchfab.com/3d-models/apple-iphone-18-pro-max-burgundy-2026-604acc18b5d5455d820a16359b45b003'],
-['Apple Vision Pro, 3D model by Sketcher on Sketchfab (CC-BY-4.0); simplified and textures resized for the web','https://sketchfab.com/3d-models/apple-vision-pro-d225809b5c8149bc9e866ad920cdba83'],
+['Apple Vision Pro, 3D model by Sketcher on Sketchfab (CC-BY-4.0); simplified, textures resized for the web, emission removed (shown switched off)','https://sketchfab.com/3d-models/apple-vision-pro-d225809b5c8149bc9e866ad920cdba83'],
 ['"Metal Mug Holder" by Mopra on Sketchfab (CC-BY-4.0); split into a stand and six separate mugs for instance labels','https://sketchfab.com/3d-models/metal-mug-holder-34dfc5259e104e108c40c9e891b16f7b'],
 ['Babylon.js documentation','https://doc.babylonjs.com/'],
 ['C. Peters, Free blue noise textures (CC0), bundled for IBL shadow sampling','https://momentsingraphics.de/BlueNoise.html'],
@@ -558,7 +560,7 @@ mainView.customResize=c=>{const w=Math.max(1,Math.round(c.clientWidth*DPR_MAIN))
 // render on demand: each canvas renders only for a few frames after something changes (the IBL shadows need ~40 to converge)
 let dCam=0,dMain=0,looping=false,stageVis=true;
 const ptCovers=()=>!!PT&&rend==='pt'&&mode==='rgb';
-function kick(c=40,m=3){dCam=Math.max(dCam,c);dMain=Math.max(dMain,m);if(!looping&&stageVis&&!document.hidden){looping=true;engine.runRenderLoop(loop);}}
+function kick(c=40,m=10){dCam=Math.max(dCam,c);dMain=Math.max(dMain,m);if(!looping&&stageVis&&!document.hidden){looping=true;engine.runRenderLoop(loop);}}
 const ovOpen=()=>$('ovCard').open&&cMain.clientWidth>0;const afterCam=[];
 engine.onBeginFrameObservable.add(()=>{if(!ovOpen())dMain=0;camView.enabled=dCam>0&&!ptCovers();mainView.enabled=dMain>0;});
 function loop(){const v=engine.activeView;if(v){scene.render();const rdy=scene.isReady(false);if(!rdy){dCam=Math.max(dCam,3);dMain=Math.max(dMain,ovOpen()?3:0);}if(v===camView){dCam--;if(rdy){afterCam.splice(0).forEach(f=>f());if(!loadDone&&LT.phone&&LT.hdri&&Object.values(LT).every(t=>t.done||t.id==='gpu')){ltd('gpu');finishLoad();idlePreload();}}}else dMain--;}
@@ -566,17 +568,17 @@ if((dCam<=0||ptCovers())&&dMain<=0||!stageVis||document.hidden){engine.stopRende
 ['pointerdown','pointermove','wheel'].forEach(t=>cMain.addEventListener(t,e=>{if(t!=='pointermove'||e.buttons)kick(0,6);},{passive:true}));
 mainCam.onViewMatrixChangedObservable.add(()=>{dMain=Math.max(dMain,2);});
 const mq=matchMedia('(max-width:760px)');function dock(){const on=mq.matches&&stageVis;$('bar').classList.toggle('dock',on);document.body.classList.toggle('docked',on);}
-new IntersectionObserver(es=>{stageVis=es[0].isIntersecting;dock();if(stageVis)kick(40,3);}).observe(document.querySelector('.viewer'));mq.addEventListener('change',dock);
+new IntersectionObserver(es=>{stageVis=es[0].isIntersecting;dock();if(stageVis)kick(40,10);}).observe(document.querySelector('.viewer'));mq.addEventListener('change',dock);
 if(mq.matches){$('fxCard').open=false;}
 $('ovCard').addEventListener('toggle',()=>{sizeViews();kick(0,6);});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)kick(40,3);});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)kick(40,10);});
 let frus=null,sky=null,dp=null,ssao=null,ssr=null,ibl=null;
 try{dp=new BABYLON.DefaultRenderingPipeline('dp',true,scene,[camR]);dp.samples=4;dp.fxaaEnabled=true;dp.bloomEnabled=true;dp.bloomThreshold=2.5;dp.bloomWeight=0.1;dp.bloomKernel=48;dp.bloomScale=0.5;dp.imageProcessingEnabled=true;dp.depthOfFieldBlurLevel=BABYLON.DepthOfFieldEffectBlurLevel.Medium;dp.depthOfField.fStop=2.0;}catch(e){dp=null;}
 try{ssao=new BABYLON.SSAO2RenderingPipeline('ssao',scene,{ssaoRatio:0.5,blurRatio:0.5},[camR],true);ssao.radius=0.05;ssao.totalStrength=1.0;ssao.base=0.1;ssao.samples=12;ssao.maxZ=6;ssao.minZAspect=0.5;ssao.expensiveBlur=true;}catch(e){ssao=null;}
 try{ssr=new BABYLON.SSRRenderingPipeline('ssr',scene,[camR],false);ssr.strength=0.7;ssr.reflectionSpecularFalloffExponent=2;ssr.thickness=0.02;ssr.step=0.01;ssr.maxDistance=2;ssr.maxSteps=200;ssr.blurDispersionStrength=0.03;ssr.roughnessFactor=0.2;ssr.isEnabled=false;}catch(e){ssr=null;}
 try{if(BABYLON.IblShadowsRenderPipeline&&BABYLON.IblShadowsRenderPipeline.IsSupported){ibl=new BABYLON.IblShadowsRenderPipeline('ibl',scene,{resolutionExp:6,sampleDirections:2,shadowOpacity:0.85,shadowRemanence:0.75,triPlanarVoxelization:true,ssShadowsEnabled:true,ssShadowSampleCount:8,ssShadowStride:8,shadowRenderSizeFactor:0.75},[camR]);ibl.addShadowReceivingMaterial(Object.values(SM));ibl.onShadowTextureReadyObservable&&ibl.onShadowTextureReadyObservable.add(()=>kick(40,0));ibl.onVoxelizationCompleteObservable&&ibl.onVoxelizationCompleteObservable.add(()=>kick(40,0));}}catch(e){console.warn(e);ibl=null;}
 function castSet(){const list=[];OB.forEach(o=>o.meshes.forEach(me=>{const tr=o.slot&&RES[o.slot]&&RES[o.slot].t>0;if(me.metadata.cast&&!tr)list.push(me);}));return list;}
-function updateCasters(){const L=castSet();OB.forEach(o=>o.meshes.forEach(me=>{if(!me.metadata.cast)return;if(L.includes(me)){sg.addShadowCaster(me);sgS.addShadowCaster(me);}else{sg.removeShadowCaster(me);sgS.removeShadowCaster(me);}}));if(ibl){try{ibl.clearShadowCastingMeshes();ibl.addShadowCastingMesh(L);ibl.updateSceneBounds();ibl.updateVoxelization();}catch(e){}}kick(40,3);}
+function updateCasters(){const L=castSet();OB.forEach(o=>o.meshes.forEach(me=>{if(!me.metadata.cast)return;if(L.includes(me)){sg.addShadowCaster(me);sgS.addShadowCaster(me);}else{sg.removeShadowCaster(me);sgS.removeShadowCaster(me);}}));if(ibl){try{ibl.clearShadowCastingMeshes();ibl.addShadowCastingMesh(L);ibl.updateSceneBounds();ibl.updateVoxelization();}catch(e){}}kick(40,10);}
 const FX={keysh:true,ibls:!!ibl,ssao:!!ssao,pom:true,ssr:false,bloom:true,dof:false,aa:true};
 const FXL=[['keysh','Key-light and sun shadows (PCSS / PCF)',true],['ibls','HDRI shadows (IBL voxel + screen space)',!!ibl],['ssao','Ambient occlusion (SSAO2)',!!ssao],['pom','Displacement as parallax occlusion',true],['ssr','Screen-space reflections',!!ssr],['bloom','Bloom',!!dp],['dof','Depth of field (f/2, both renderers)',!!dp],['aa','Anti-aliasing (MSAA + FXAA)',!!dp]];
 FXL.forEach(([k,t,ok])=>{const l=document.createElement('label');const c=document.createElement('input');c.type='checkbox';c.id='fx_'+k;c.checked=FX[k]&&ok;c.disabled=!ok;c.onchange=()=>{FX[k]=c.checked;applyFX();if(k==='dof')ptMark('cam');if(k==='pom')applyAll();const nm=t.split(' (')[0];setStatus((c.checked?'Turning on ':'Turning off ')+nm.toLowerCase()+'…','busy');new Promise(r=>afterCam.push(r)).then(()=>setStatus(nm+(c.checked?' on':' off'),'ok'));};l.htmlFor=c.id;l.appendChild(c);l.appendChild(document.createTextNode(t+(ok?'':' (unavailable)')));$('fx').appendChild(l);});
@@ -587,7 +589,7 @@ if(ssr)ssr.isEnabled=FX.ssr&&!lab;
 if(ibl){try{ibl.toggleShadow(FX.ibls&&!lab);}catch(e){}}
 rig.key.shadowEnabled=FX.keysh;sunL.shadowEnabled=FX.keysh;
 if(dp){dp.bloomEnabled=FX.bloom&&!lab;dp.depthOfFieldEnabled=FX.dof&&!lab;dp.fxaaEnabled=FX.aa&&!lab;dp.samples=(FX.aa&&!lab)?2:1;dp.imageProcessingEnabled=!lab;}}
-function sizeViews(){const CS=Math.max(120,Math.round($('camBox').clientWidth));cCam.width=cCam.height=Math.round(CS*DPR);$('ov').width=$('ov').height=CS*2;if(cMain.clientWidth>0){cMain.width=Math.round(cMain.clientWidth*DPR_MAIN);cMain.height=Math.round(cMain.clientHeight*DPR_MAIN);}engine.resize();kick(40,3);if(PT)ptResize();drawOv();}
+function sizeViews(){const CS=Math.max(120,Math.round($('camBox').clientWidth));cCam.width=cCam.height=Math.round(CS*DPR);$('ov').width=$('ov').height=CS*2;if(cMain.clientWidth>0){cMain.width=Math.round(cMain.clientWidth*DPR_MAIN);cMain.height=Math.round(cMain.clientHeight*DPR_MAIN);}engine.resize();kick(40,10);if(PT)ptResize();drawOv();}
 new ResizeObserver(()=>sizeViews()).observe($('camBox'));
 // ---------- HDRI
 const ENV={};let curEnv=null,loadingName=null;
@@ -597,14 +599,14 @@ const ENVP={},HSZ={royal_esplanade_1k:1676014,venice_sunset_1k:1440400,pedestria
 function ensureEnv(name){if(ENV[name]){if(LM==='hdri'){curEnv=ENV[name];useEnv();}return Promise.resolve();}if(ENVP[name])return ENVP[name];loadingName=name;const nice=name.replace('_1k','').replace(/_/g,' ');lt('hdri','HDRI · '+nice,(HSZ[name]/1e6).toFixed(1)+' MB');if(loadDone)setStatus('Loading HDRI '+nice+'…','busy');paintLegend();
 ENVP[name]=fetchBytes(PHC+'HDRIs/hdr/1k/'+name+'.hdr',f=>{ltp('hdri',f);if(loadDone){setStatus('Loading HDRI '+nice+' · '+Math.round(f*100)+'%','busy');setProg(f);}},HSZ[name]).then(toB64).then(b64=>new Promise((res,rej)=>{if(loadDone)setStatus('Building lighting from '+nice+'…','busy');setProg(0);
 const t=new BABYLON.HDRCubeTexture('data:application/octet-stream;base64,'+b64,scene,256,false,true,false,true,async()=>{ENV[name]={tex:t,name,b64,L0:await envL0(t)};loadingName=null;ltd('hdri');if(S&&S.hdri===name&&LM==='hdri'){curEnv=ENV[name];useEnv();}paintLegend();res();},m=>rej(new Error(m||'hdr')));})).catch(e=>{delete ENVP[name];loadingName=null;setProg(0);setStatus('HDRI could not load: tap Shuffle to retry','');paintLegend('HDRI could not load.');throw e;});return ENVP[name];}
-function useEnv(){if(!curEnv)return;kick(40,3);scene.environmentTexture=curEnv.tex;if(sky)sky.dispose();sky=scene.createDefaultSkybox(curEnv.tex,true,60,0,false);if(sky){sky.layerMask=ALL|GIZ;sky.isPickable=false;}curMode='';applyLight();update();ptMark('env');if(ibl)try{ibl.updateVoxelization();}catch(e){}}
+function useEnv(){if(!curEnv)return;kick(40,10);scene.environmentTexture=curEnv.tex;if(sky)sky.dispose();sky=scene.createDefaultSkybox(curEnv.tex,true,60,0,false);if(sky){sky.layerMask=ALL|GIZ;sky.isPickable=false;}curMode='';applyLight();update();ptMark('env');if(ibl)try{ibl.updateVoxelization();}catch(e){}}
 // exposure is set from the HDRI's average radiance; the rig is sized against the same number so the ratio stays fixed
 function applyLight(){if(!curEnv||!S)return;if(LM!=='hdri'){applySun();return;}const L0=curEnv.L0||1,str=S.strength;
 scene.environmentIntensity=str*HDRI_SHARE;const Eenv=Math.PI*L0*str;const R=S.rig;const Ekey=Eenv*R.keyX;
 ['key','fill','rim'].forEach(k=>{const l=rig[k],p=R[k];const P=V(...p.pos),T=V(...S.poi);l.position=P;l.direction=T.subtract(P).normalize();const d=BABYLON.Vector3.Distance(P,T);const E=k==='key'?Ekey:k==='fill'?Ekey/R.ratio:Ekey*R.rimX;l.intensity=E*d*d*BAB_K;l._E=E;l._d=d;rigG[k].s.position=P;rigG[k].lb.position=P.add(new BABYLON.Vector3(0,0.06,0));});
 let Et=Math.PI*L0*str*HDRI_SHARE;['key','fill','rim'].forEach(k=>{const l=rig[k];Et+=l._E*Math.max(0,-l.direction.y);});S.Et=Et;
 // incident meter (grey card on the table), −0.5 EV to hold highlights on near-white tops; one value per scene, so all 50 views match
-ip.exposure=Math.min(4,Math.max(0.1,0.7*Math.PI/Et))*Math.pow(2,+$('ev').value);ptMark('light');kick(40,3);}
+ip.exposure=Math.min(4,Math.max(0.1,0.7*Math.PI/Et))*Math.pow(2,+$('ev').value);ptMark('light');kick(40,10);}
 $('ev').addEventListener('input',()=>{$('v_ev').textContent=(+$('ev').value>=0?'+':'')+(+$('ev').value).toFixed(1)+' EV';applyLight();update();});$('v_ev').textContent='+0.0 EV';
 // ---------- Sun & sky from location, date and time
 // Position: NOAA Solar Calculator equations (Meeus, Astronomical Algorithms), with NOAA's refraction model.
@@ -678,6 +680,39 @@ if(n){for(let i=0;i<5;i++)c[i]=x(i,0)+x(i,1)*Z+del*(x(i,2)+x(i,3)*Z);}
 else{c[0]=x(0,0)+x(0,1)*Z+del*(x(0,2)+x(0,3)*Z);c[1]=x(1,0)+x(1,1)*Z+del*(x(1,2)+x(1,3)*Z);c[4]=x(4,0)+x(4,1)*Z+del*(x(4,2)+x(4,3)*Z);c[2]=Math.exp((del*(x(2,0)+x(2,1)*Z))**x(2,2))-x(2,3);c[3]=-Math.exp(del*(x(3,0)+x(3,1)*Z))+x(3,2)+del*x(3,3);}
 return{c,bin:n+1};}
 const perezRel=(dz,g,c)=>(1+c[0]*Math.exp(c[1]/Math.max(cos(dz),0.01)))*(1+c[2]*Math.exp(c[3]*g)+c[4]*cos(g)**2);
+// ---------- Moon: position (Schlyter's lunar theory with the 12 largest longitude, 5 latitude and 2 distance perturbations,
+// topocentric parallax, NOAA refraction), phase, and moonlight + night-sky brightness from Krisciunas & Schaefer 1991 (PASP 103, 1033)
+function moonPosition(t,lat,lon,alt){const R2=Math.PI/180,jd=t/86400000+2440587.5,d=jd-2451543.5,s=x=>Math.sin(x*R2),c=x=>Math.cos(x*R2),n=x=>((x%360)+360)%360;
+const N=n(125.1228-0.0529538083*d),inc=5.1454,w=n(318.0634+0.1643573223*d),a=60.2666,e=0.0549,M=n(115.3654+13.0649929509*d);
+let E=M+e/R2*s(M)*(1+e*c(M));for(let k=0;k<6;k++)E=E-(E-e/R2*s(E)-M)/(1-e*c(E));
+const xv=a*(c(E)-e),yv=a*Math.sqrt(1-e*e)*s(E),v=Math.atan2(yv,xv)/R2;let r=Math.hypot(xv,yv);
+const xh=r*(c(N)*c(v+w)-s(N)*s(v+w)*c(inc)),yh=r*(s(N)*c(v+w)+c(N)*s(v+w)*c(inc)),zh=r*(s(v+w)*s(inc));
+let lo=Math.atan2(yh,xh)/R2,la=Math.atan2(zh,Math.hypot(xh,yh))/R2;
+const Ms=n(356.047+0.9856002585*d),ws=282.9404+4.70935e-5*d,Ls=Ms+ws,Lm=M+w+N,D=Lm-Ls,F=Lm-N;
+lo+=-1.274*s(M-2*D)+0.658*s(2*D)-0.186*s(Ms)-0.059*s(2*M-2*D)-0.057*s(M-2*D+Ms)+0.053*s(M+2*D)+0.046*s(2*D-Ms)+0.041*s(M-Ms)-0.035*s(D)-0.031*s(M+Ms)-0.015*s(2*F-2*D)+0.011*s(M-4*D);
+la+=-0.173*s(F-2*D)-0.055*s(M-F-2*D)-0.046*s(M+F-2*D)+0.033*s(F+2*D)+0.017*s(2*M+F);
+r+=-0.58*c(M-2*D)-0.46*c(2*D); // Earth radii
+const ecl=23.4393-3.563e-7*d;const xe=r*c(lo)*c(la),ye0=r*s(lo)*c(la),ze0=r*s(la);const ye=ye0*c(ecl)-ze0*s(ecl),ze=ye0*s(ecl)+ze0*c(ecl);
+// observer (Meeus ch. 11) in Earth radii, equatorial frame of date
+const gmst=n(280.46061837+360.98564736629*(jd-2451545)),lst=gmst+lon,u=Math.atan(0.99664719*Math.tan(lat*R2))/R2,h=(alt||0)/6378140,rc=c(u)+h*c(lat),rs=0.99664719*s(u)+h*s(lat);
+const X=xe-rc*c(lst),Y=ye-rc*s(lst),Z=ze-rs,dist=Math.hypot(X,Y,Z);const ra=Math.atan2(Y,X)/R2,dec=Math.asin(Z/dist)/R2,ha=lst-ra;
+const sa=s(lat)*s(dec)+c(lat)*c(dec)*c(ha),el=Math.asin(Math.max(-1,Math.min(1,sa)))/R2;const az=n(Math.atan2(-c(dec)*s(ha),s(dec)*c(lat)-c(dec)*s(lat)*c(ha))/R2);
+return{az,el,elApp:el+refraction(el),lon:lo,lat:la,distKm:r*6378.14};}
+function moonPhase(t,mp){const sp=position(t,0,0);const R2=Math.PI/180;// sun's apparent ecliptic longitude from the solar module
+const jd=t/86400000+2440587.5,jc=(jd-2451545)/36525;const L0=((280.46646+jc*(36000.76983+jc*0.0003032))%360+360)%360,M=357.52911+jc*(35999.05029-0.0001537*jc),C=Math.sin(M*R2)*(1.914602-jc*(0.004817+0.000014*jc))+Math.sin(2*M*R2)*(0.019993-0.000101*jc)+Math.sin(3*M*R2)*0.000289;const lamS=L0+C;
+const cpsi=Math.cos(mp.lat*R2)*Math.cos((mp.lon-lamS)*R2),psi=Math.acos(cpsi);const Rkm=sp.R*149597870.7;const i=Math.atan2(Rkm*Math.sin(psi),mp.distKm-Rkm*Math.cos(psi));
+const waxing=((mp.lon-lamS)%360+360)%360<180;return{alpha:i/R2,frac:(1+Math.cos(i))/2,elong:psi/R2,waxing};}
+// V-band extinction (mag per air mass) from the same atmosphere as the daytime model: Rayleigh + Angstrom aerosols + ozone
+const extinctionV=(pr,aod500)=>1.0857*(pr*0.008735*0.55**-4.08+aod500*(550/500)**-1.14)+0.016;
+const ksX=Z=>1/Math.sqrt(1-0.96*Math.sin(Z)**2); // K&S air mass
+const ksI=alpha=>10**(-0.4*(3.84+0.026*Math.abs(alpha)+4e-9*alpha**4)); // moon outside the atmosphere, foot-candles
+const ksF=rho=>{const r=Math.max(0.25,rho*180/Math.PI);return 10**5.36*(1.06+Math.cos(rho)**2)+(r>=10?10**(6.15-r/40):6.2e7/(r*r));}; // nL per fc; Mie term below 10° per Krisciunas & Schaefer
+const FC2LX=10.7639,NL2CD=1e-9*1e4/Math.PI,BZEN=34.08*Math.exp(20.7233-0.92104*21.6); // natural dark sky 21.6 mag/arcsec² (Garstang 1989 conversion), in nL
+function night(o,t){const mp=moonPosition(t,o.lat,o.lon,o.alt),ph=moonPhase(t,mp),pr=pressure(o.alt||0)/101325,k=extinctionV(pr,o.aod??0.1),Zm=(90-mp.elApp)*Math.PI/180,up=mp.elApp>0;
+const Istar=ksI(ph.alpha),Elx=up?Istar*10**(-0.4*k*ksX(Zm))*FC2LX:0; // moonlight on a surface facing the Moon, lux
+const lum=(Z,rho)=>{const X=ksX(Math.min(Z,Math.PI/2-1e-3));const b0=BZEN*10**(-0.4*k*(X-1))*X;const bm=up?ksF(rho)*Istar*10**(-0.4*k*ksX(Zm))*(1-10**(-0.4*k*X)):0;return{moon:bm*NL2CD,dark:b0*NL2CD};}; // cd/m²
+const mc=sunColor(Math.max(mp.elApp,0.5),o.aod??0.1),rd=[1.1,1,0.82],m2=mc.map((v,i)=>v*rd[i]),Y=0.2126*m2[0]+0.7152*m2[1]+0.0722*m2[2];
+return{moon:mp,phase:ph,k,Elx,lum,moonRGB:m2.map(v=>v/Y),skyRGB:skyColor(Math.max(mp.elApp,0.5),o.aod??0.1)};}
 // everything for one moment. o.meas = {dni, dhi, ghi} switches from the clear-sky model to measured irradiance and the Perez sky
 function compute(o){const t=zonedToUTC(o.y,o.mo,o.d,o.h,o.mi,o.tz);const p=position(t,o.lat,o.lon);const alt=o.alt||0,aod=o.aod??0.1,w=o.w??1.5,TL=linke(aod,w);
 const pr=pressure(alt)/101325,am=airmass(p.zenApp),amAbs=am*pr,E0=extra(t);let irr,sky;
@@ -690,12 +725,12 @@ return{t,offMin:tzOffsetMin(t,o.tz),...p,am,amAbs,pr,E0,...irr,TL,aod,w,alt,sky,
 function skyMap(s,W,H,dirFn,sunDir,albedo=0.2){const Zs=s.zenApp*D,rad=new Float32Array(W*H);let Eh=0;
 for(let j=0;j<H;j++)for(let i=0;i<W;i++){const d=dirFn((i+0.5)/W,(j+0.5)/H);if(d[1]<=0)continue;const Z=Math.acos(Math.min(1,d[1])),g=Math.acos(Math.max(-1,Math.min(1,d[0]*sunDir[0]+d[1]*sunDir[1]+d[2]*sunDir[2])));const L=Zs<Math.PI/2?(s.sky.model==='perez'?perezRel(Z,g,s.sky.c):cieRel(Z,g,Zs)):0;rad[j*W+i]=L;const th=Math.PI*(j+0.5)/H;Eh+=L*d[1]*Math.sin(th)*(2*Math.PI/W)*(Math.PI/H);}
 const k=Eh>0?s.dhi/Eh:0,gL=albedo*s.ghi/Math.PI,out=new Float32Array(W*H*3),sc=s.skyRGB,gc=[0.5,0.48,0.45].map(v=>v/(0.2126*0.5+0.7152*0.48+0.0722*0.45));
-for(let j=0;j<H;j++)for(let i=0;i<W;i++){const d=dirFn((i+0.5)/W,(j+0.5)/H),q=(j*W+i)*3;if(d[1]>0){const L=rad[j*W+i]*k;out[q]=L*sc[0];out[q+1]=L*sc[1];out[q+2]=L*sc[2];}else{const L=gL;const w=s.sunRGB;out[q]=L*gc[0]*w[0];out[q+1]=L*gc[1]*w[1];out[q+2]=L*gc[2]*w[2];}}
+for(let j=0;j<H;j++)for(let i=0;i<W;i++){const d=dirFn((i+0.5)/W,(j+0.5)/H),q=(j*W+i)*3;if(d[1]>0){const L=rad[j*W+i]*k;out[q]=L*sc[0];out[q+1]=L*sc[1];out[q+2]=L*sc[2];}else{out[q]=out[q+1]=out[q+2]=0;}}
 return{data:out,k};}
 // Radiance .hdr (RGBE, flat scanlines) so both renderers load it through the same path as the HDRIs
 function rgbe(data,W,H){const head='#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n-Y '+H+' +X '+W+'\n';const hb=new TextEncoder().encode(head),out=new Uint8Array(hb.length+W*H*4);out.set(hb);let o=hb.length;
 for(let p=0;p<W*H;p++){const r=data[p*3],g=data[p*3+1],b=data[p*3+2],v=Math.max(r,g,b);if(v<1e-32){o+=4;continue;}const e=Math.ceil(Math.log2(v)+1e-9)||0;const f=256/2**e;let E=e;let sc=f;if(v*sc>=256){E++;sc/=2;}out[o++]=Math.min(255,Math.floor(r*sc));out[o++]=Math.min(255,Math.floor(g*sc));out[o++]=Math.min(255,Math.floor(b*sc));out[o++]=E+128;}return out;}
-return{linke,perezParams,perezCoef,perezRel,SPEC,zonedToUTC,tzOffsetMin,position,events,airmass,pressure,extra,ineichen,cieRel,sunColor,skyColor,compute,skyMap,rgbe,CIE12};})();
+return{moonPosition,moonPhase,night,extinctionV,linke,perezParams,perezCoef,perezRel,SPEC,zonedToUTC,tzOffsetMin,position,events,airmass,pressure,extra,ineichen,cieRel,sunColor,skyColor,compute,skyMap,rgbe,CIE12};})();
 // ---------- Sun & sky from place, date and time (clear-sky models or measured weather)
 const LMODES=[['hdri','HDRI + rig'],['clear','Clear sky'],['wx','Weather data']];let LM='hdri';
 const PLACES=[['Hong Kong','Asia/Hong_Kong',22.2783,114.1747,10],['Apple Park, Cupertino','America/Los_Angeles',37.3349,-122.009,50],['London','Europe/London',51.5074,-0.1278,11],['New York','America/New_York',40.7128,-74.006,10],['Tokyo','Asia/Tokyo',35.6762,139.6503,40],['Singapore','Asia/Singapore',1.3521,103.8198,15],['Sydney','Australia/Sydney',-33.8688,151.2093,3],['Reykjavík','Atlantic/Reykjavik',64.1466,-21.9426,20]];
@@ -709,7 +744,7 @@ const azel2v=(az,el)=>{const a=az*Math.PI/180,e=el*Math.PI/180;return[Math.sin(a
 // measured: equirect u = 0.5 + azimuth/360, top row = zenith, identical in Babylon and in three.js with ENVFIX
 const eqDir=(u,v)=>azel2v((u-0.5)*360,90-v*180);
 function cctOf(rgb){const M=[0.4124564,0.3575761,0.1804375,0.2126729,0.7151522,0.072175,0.0193339,0.119192,0.9503041];const X=M[0]*rgb[0]+M[1]*rgb[1]+M[2]*rgb[2],Y=M[3]*rgb[0]+M[4]*rgb[1]+M[5]*rgb[2],Z=M[6]*rgb[0]+M[7]*rgb[1]+M[8]*rgb[2];const s=X+Y+Z,x=X/s,y=Y/s,n=(x-0.332)/(0.1858-y);return Math.round(449*n**3+3525*n**2+6823.3*n+5520.33);} // McCamy 1992
-const sunG=markG(BABYLON.MeshBuilder.CreateSphere('sunG',{diameter:0.07,segments:12},scene));sunG.material=gizMat('#ffd166');const sunLb=label('sun','#ffd166');
+const sunG=markG(BABYLON.MeshBuilder.CreateSphere('sunG',{diameter:0.07,segments:12},scene));sunG.material=gizMat('#ffd166');const sunLb=label('sun','#ffd166'),moonLb=label('moon','#dfe6f0');moonLb.setEnabled(false);
 const nLb=label('N  (−Z)','#8a909b');nLb.position=new BABYLON.Vector3(0,0.01,-0.62);const nLine=markG(BABYLON.MeshBuilder.CreateLines('nl',{points:[new BABYLON.Vector3(0,0.002,-0.32),new BABYLON.Vector3(0,0.002,-0.58)]},scene));nLine.color=C3('#8a909b');
 [sunG,sunLb,nLb,nLine].forEach(m=>m.setEnabled(false));
 let SUNS=null,SUNK=1,sunEnvN=0,sunBusy=false,sunAgain=false,WX=null;const WXC={};
@@ -734,37 +769,43 @@ s=SUN.compute({...o,aod,meas:{dni:v.dni,dhi:v.dhi,ghi:v.ghi}});WX={...v,aod500:a
 catch(e){$('wxStat').textContent='Weather data unavailable: '+e.message+' Showing the clear-sky model instead.';}}
 else $('wxStat').textContent='';return s;}
 async function sunRebuild(){if(LM==='hdri')return;if(sunBusy){sunAgain=true;return;}sunBusy=true;
-try{const s=await sunCompute();if(LM==='hdri')return;const sd=azel2v(s.az,s.elApp),Eh=s.dhi+s.dni*Math.max(0,sd[1]);s.night=Eh<0.5;SUNK=s.night?1:1/Eh;s.dir=sd;
-const Wm=512,Hm=256,m=SUN.skyMap(s,Wm,Hm,eqDir,sd);const dat=m.data;for(let i=0;i<dat.length;i++)dat[i]*=SUNK;const b64=b64of(SUN.rgbe(dat,Wm,Hm));
-const name='sun#'+(++sunEnvN);await new Promise((res,rej)=>{const t=new BABYLON.HDRCubeTexture('data:application/octet-stream;base64,'+b64,scene,256,false,true,false,true,()=>{const old=Object.keys(ENV).filter(k=>k.startsWith('sun#'));ENV[name]={tex:t,name,b64,L0:1};SUNS=s;
+try{const s=await sunCompute();if(LM==='hdri')return;const sd=azel2v(s.az,s.elApp),Eh=s.dhi+s.dni*Math.max(0,sd[1]);s.night=s.elApp<=-0.833||Eh<0.5;const Wm=512,Hm=256;let dat;
+if(!s.night){SUNK=1/Eh;s.dir=sd;s.src='sun';s.E=s.dni;s.lRGB=s.sunRGB;dat=SUN.skyMap(s,Wm,Hm,eqDir,sd).data;}
+else{const nt=SUN.night(sunInputs(),s.t);s.nt=nt;const md=azel2v(nt.moon.az,nt.moon.elApp);s.dir=md;s.src=nt.Elx>0?'moon':'none';s.E=nt.Elx;s.lRGB=nt.moonRGB;
+dat=new Float32Array(Wm*Hm*3);let Es=0;for(let j=0;j<Hm/2;j++)for(let i=0;i<Wm;i++){const dv=eqDir((i+0.5)/Wm,(j+0.5)/Hm);if(dv[1]<=0)continue;const Z=Math.acos(Math.min(1,dv[1])),rho=Math.acos(Math.max(-1,Math.min(1,dv[0]*md[0]+dv[1]*md[1]+dv[2]*md[2])));const L=nt.lum(Z,rho),q=(j*Wm+i)*3;
+for(let c=0;c<3;c++)dat[q+c]=L.moon*nt.skyRGB[c]+L.dark;Es+=(L.moon+L.dark)*dv[1]*Math.sin(Math.PI*(j+0.5)/Hm)*(2*Math.PI/Wm)*(Math.PI/Hm);}
+s.skyE=Es;const Et=Es+nt.Elx*Math.max(0,md[1]);s.Eh=Et;SUNK=1/Et;}
+for(let i=0;i<dat.length;i++)dat[i]*=SUNK;const b64=b64of(SUN.rgbe(dat,Wm,Hm));
+const name='sun#'+(++sunEnvN);await new Promise((res,rej)=>{setTimeout(()=>rej(new Error('sky timeout')),10000);const t=new BABYLON.HDRCubeTexture('data:application/octet-stream;base64,'+b64,scene,256,false,true,false,true,()=>{const old=Object.keys(ENV).filter(k=>k.startsWith('sun#'));ENV[name]={tex:t,name,b64,L0:1};SUNS=s;
 if(LM!=='hdri'){curEnv=ENV[name];useSunEnv();}old.forEach(k=>{if(ENV[k]&&ENV[k].tex!==scene.environmentTexture)ENV[k].tex.dispose();delete ENV[k];if(PT&&PT.dropEnv)PT.dropEnv(k);});res();},e=>rej(new Error(e||'sky')));});
 paintSun();}catch(e){console.error(e);toast('The sky could not be built');}finally{sunBusy=false;if(sunAgain){sunAgain=false;sunRebuild();}}}
-function useSunEnv(){kick(40,3);scene.environmentTexture=curEnv.tex;if(sky)sky.dispose();sky=scene.createDefaultSkybox(curEnv.tex,true,60,0,false);if(sky){sky.layerMask=ALL|GIZ;sky.isPickable=false;}curMode='';applyLight();update();if(ibl)try{ibl.updateVoxelization();}catch(e){}}
+function useSunEnv(){kick(40,10);scene.executeWhenReady(()=>kick(12,12));scene.environmentTexture=curEnv.tex;if(sky)sky.dispose();sky=scene.createDefaultSkybox(curEnv.tex,true,60,0,false);if(sky){sky.layerMask=ALL|GIZ;sky.isPickable=false;}curMode='';applyLight();update();if(ibl)try{ibl.updateVoxelization();}catch(e){}}
 function applySun(){const s=SUNS;if(!s||!S)return;Object.values(rig).forEach(l=>l.setEnabled(false));Object.values(rigG).forEach(g=>{g.s.setEnabled(false);g.lb.setEnabled(false);});
-scene.environmentIntensity=1;const d=s.dir,up=d[1]>0&&!s.night;sunL.setEnabled(up);sunL.direction=new BABYLON.Vector3(-d[0],-d[1],-d[2]);sunL.position=new BABYLON.Vector3(d[0]*3,d[1]*3,d[2]*3);sunL.intensity=up?s.dni*SUNK:0;sunL.diffuse=BABYLON.Color3.FromArray(s.sunRGB);sunL.specular=sunL.diffuse;sunL.shadowEnabled=FX.keysh;
-[sunG,sunLb,nLb,nLine].forEach(m=>m.setEnabled(true));sunG.setEnabled(up);sunLb.setEnabled(up);const gp=new BABYLON.Vector3(d[0]*1.3,Math.max(d[1],0)*1.3,d[2]*1.3);sunG.position=gp;sunLb.position=gp.add(new BABYLON.Vector3(0,0.07,0));
-S.Et=s.night?1e-3:1;ip.exposure=Math.min(4,Math.max(0.1,0.7*Math.PI/S.Et))*Math.pow(2,+$('ev').value);ptMark('sun');kick(40,3);}
-function leaveSun(){sunL.setEnabled(false);[sunG,sunLb,nLb,nLine].forEach(m=>m.setEnabled(false));Object.values(rig).forEach(l=>l.setEnabled(true));Object.values(rigG).forEach(g=>{g.s.setEnabled(true);g.lb.setEnabled(true);});
+scene.environmentIntensity=1;const d=s.dir,up=d[1]>0&&s.src!=='none';sunL.setEnabled(up);sunL.direction=new BABYLON.Vector3(-d[0],-d[1],-d[2]);sunL.position=new BABYLON.Vector3(d[0]*3,d[1]*3,d[2]*3);sunL.intensity=up?s.E*SUNK:0;sunL.diffuse=BABYLON.Color3.FromArray(s.lRGB);sunL.specular=sunL.diffuse;sunL.shadowEnabled=FX.keysh;
+[sunG,sunLb,nLb,nLine].forEach(m=>m.setEnabled(true));sunG.setEnabled(up);sunLb.setEnabled(up&&s.src==='sun');moonLb.setEnabled(up&&s.src==='moon');sunG.material.emissiveColor=C3(s.src==='moon'?'#dfe6f0':'#ffd166');const gp=new BABYLON.Vector3(d[0]*1.3,Math.max(d[1],0)*1.3,d[2]*1.3);sunG.position=gp;sunLb.position=gp.add(new BABYLON.Vector3(0,0.07,0));moonLb.position=sunLb.position;
+S.Et=1;ip.exposure=Math.min(4,Math.max(0.1,0.7*Math.PI/S.Et))*Math.pow(2,+$('ev').value);ptMark('sun');kick(40,10);}
+function leaveSun(){sunL.setEnabled(false);moonLb.setEnabled(false);[sunG,sunLb,nLb,nLine].forEach(m=>m.setEnabled(false));Object.values(rig).forEach(l=>l.setEnabled(true));Object.values(rigG).forEach(g=>{g.s.setEnabled(true);g.lb.setEnabled(true);});
 if(S&&ENV[S.hdri]){curEnv=ENV[S.hdri];useEnv();}else if(S)ensureEnv(S.hdri).catch(()=>{});ptMark('sun');}
 function setLM(k){if(k===LM)return;LM=k;if(k==='hdri'&&playing)stopPlay();[...$('lmode').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k));$('sunCtl').hidden=k==='hdri';$('clearCtl').hidden=k!=='clear';
-if(k==='hdri'){leaveSun();update();paintLegend();setStatus('HDRI + studio rig','ok');}else{setStatus(k==='wx'?'Fetching weather and building the sky…':'Building the sky…','busy');sunRebuild().then(()=>{if(LM===k)setStatus(SUNS&&SUNS.night?'The sun is below the horizon at that time':'Sky ready','ok');});}}
+if(k==='hdri'){leaveSun();update();paintLegend();setStatus('HDRI + studio rig','ok');}else{setStatus(k==='wx'?'Fetching weather and building the sky…':'Building the sky…','busy');sunRebuild().then(()=>{if(LM===k)setStatus(SUNS&&SUNS.night?(SUNS.src==='moon'?'Night sky with the Moon ready':'Moonless night sky ready'):'Sky ready','ok');});}}
 function paintSun(){const s=SUNS;if(!s)return;const tz=SUNP.tz,off=s.offMin,offs='UTC'+(off>=0?'+':'−')+pad2(Math.floor(Math.abs(off)/60))+':'+pad2(Math.abs(off)%60);
 const rows=[['Time',`${SUNP.date} ${SUNP.time} ${offs} · ${new Date(s.t).toISOString().slice(11,16)} UTC`],['Sun azimuth',s.az.toFixed(2)+'° from north, clockwise'],['Sun elevation',s.elApp.toFixed(2)+'° (refraction '+(s.elApp-s.el).toFixed(2)+'°)'],
 ['Sunrise · noon · sunset',fmtT(s.ev.rise,tz)+' · '+fmtT(s.ev.noon,tz)+' · '+fmtT(s.ev.set,tz)],['Air mass',isFinite(s.am)?s.am.toFixed(2):'none'],
-['Direct normal',s.dni.toFixed(0)+' W/m²'],['Diffuse horizontal',s.dhi.toFixed(0)+' W/m²'],['Global horizontal',s.ghi.toFixed(0)+' W/m²'],
-['Sky model',s.sky.model==='perez'?`Perez all-weather, bin ${s.sky.bin} (ε ${s.sky.eps.toFixed(2)}, Δ ${s.sky.del.toFixed(3)})`:'CIE standard clear sky (type 12)'],
+...(s.night?[['Moon azimuth · elevation',s.nt.moon.az.toFixed(2)+'° · '+s.nt.moon.elApp.toFixed(2)+'°'],['Moon phase',Math.round(s.nt.phase.frac*100)+'% lit, '+(s.nt.phase.waxing?'waxing':'waning')+' (phase angle '+s.nt.phase.alpha.toFixed(1)+'°)'],['Moonlight',s.nt.Elx>0?(s.nt.Elx).toFixed(3)+' lux facing the Moon':'Moon below the horizon'],['Sky light on the table',s.skyE.toFixed(4)+' lux'],['Extinction',s.nt.k.toFixed(3)+' mag per air mass (V)']]:[
+['Direct normal',s.dni.toFixed(0)+' W/m²'],['Diffuse horizontal',s.dhi.toFixed(0)+' W/m²'],['Global horizontal',s.ghi.toFixed(0)+' W/m²']]),
+['Sky model',s.night?'Krisciunas & Schaefer 1991 moonlit sky + natural dark sky':s.sky.model==='perez'?`Perez all-weather, bin ${s.sky.bin} (ε ${s.sky.eps.toFixed(2)}, Δ ${s.sky.del.toFixed(3)})`:'CIE standard clear sky (type 12)'],
 [s.sky.model==='perez'?'Aerosol depth 500 nm':'Linke turbidity',s.sky.model==='perez'?s.aod.toFixed(3)+(WX&&WX.aqOk?' (CAMS)':' (default)'):s.TL.toFixed(2)+' (AOD '+s.aod.toFixed(2)+', water '+s.w.toFixed(1)+' cm)'],
-['Sun colour',s.night?'none':'≈ '+cctOf(s.sunRGB)+' K']];
+[s.night?'Moonlight colour':'Sun colour',s.src==='none'?'none':'≈ '+cctOf(s.lRGB)+' K']];if(s.night)rows.splice(rows.findIndex(r=>r[0]==='Sky model')+1,1);
 if(WX)rows.splice(5,0,['Cloud cover',WX.cloud==null?'n/a':Math.round(WX.cloud)+' %']);
 $('sunOut').innerHTML=rows.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('');
-$('sunNote').textContent=s.night?'The sun is below the horizon. These models cover daylight only (no twilight, moon or city light), so the frame is dark.':LM==='wx'?(WX?'Experimental feature. Measured hourly means, interpolated to the minute. Cloud amount is real; where each cloud sits is not.':''):'Clear sky, no clouds: Ineichen–Perez irradiance and the CIE clear-sky shape.';paintLegend();}
+$('sunNote').textContent=s.night?(s.src==='moon'?'Night: lit by the Moon and the natural night sky. The exposure is metered, so the frame looks brighter than it does to the eye. No twilight, clouds or city light.':'Night with the Moon below the horizon: only the natural night sky (starlight and airglow). No twilight, clouds or city light.')+(LM==='wx'?' Weather data has no night-time light, so the Moon is shown for a clear sky.':''):LM==='wx'?(WX?'Experimental feature. Measured hourly means, interpolated to the minute. Cloud amount is real; where each cloud sits is not.':''):'Clear sky, no clouds: Ineichen–Perez irradiance and the CIE clear-sky shape.';paintLegend();}
 // controls
 $('lmode').innerHTML=LMODES.map(([k,t])=>`<button type="button" data-k="${k}" aria-pressed="${k===LM}">${t}</button>`).join('');$('lmode').onclick=e=>{const b=e.target.closest('button');if(b)setLM(b.dataset.k);};
 $('place').innerHTML=PLACES.map((p,i)=>`<option value="${i}">${p[0]}</option>`).join('')+'<option value="-1">Custom</option>';
 let zones=[];try{zones=Intl.supportedValuesOf('timeZone');}catch(e){}PLACES.forEach(p=>{if(!zones.includes(p[1]))zones.push(p[1]);});if(!zones.includes('UTC'))zones.unshift('UTC');$('stz').innerHTML=zones.map(z=>`<option>${z}</option>`).join('');
 function paintSunCtl(){$('place').value=String(SUNP.place);$('lat').value=SUNP.lat;$('lon').value=SUNP.lon;$('salt').value=SUNP.alt;$('stz').value=SUNP.tz;$('sdate').value=SUNP.date;$('stime').value=SUNP.time;const [h,mi]=SUNP.time.split(':').map(Number);$('tday').value=h*60+mi;$('v_tday').textContent=SUNP.time;$('aod').value=SUNP.aod;$('v_aod').textContent=SUNP.aod.toFixed(2);$('h2o').value=SUNP.w;$('v_h2o').textContent=SUNP.w.toFixed(1)+' cm';}
 paintSunCtl();
-let sunT=0;const sunSoon=()=>{clearTimeout(sunT);sunT=setTimeout(sunRebuild,120);};
+let sunT=0,sunLast=0;const sunSoon=()=>{clearTimeout(sunT);const now=Date.now();if(now-sunLast>180){sunLast=now;sunRebuild();}else sunT=setTimeout(()=>{sunLast=Date.now();sunRebuild();},180);};
 $('place').onchange=()=>{const i=+$('place').value;SUNP.place=i;if(i>=0){const p=PLACES[i];SUNP.tz=p[1];SUNP.lat=p[2];SUNP.lon=p[3];SUNP.alt=p[4];}paintSunCtl();sunSoon();};
 const numIn=(id,k,lo,hi)=>{$(id).onchange=()=>{const v=+$(id).value;if(!isFinite(v)||v<lo||v>hi){paintSunCtl();toast(`Enter a value from ${lo} to ${hi}`);return;}SUNP[k]=v;SUNP.place=-1;paintSunCtl();sunSoon();};};
 numIn('lat','lat',-90,90);numIn('lon','lon',-180,180);numIn('salt','alt',-400,8000);
@@ -790,7 +831,7 @@ MODES.forEach(([k,t])=>{const b=segBtn($('modes'),t,()=>setMode(k,b));b.dataset.
 $('modeSel').addEventListener('change',e=>setMode(e.target.value,null));
 [['rt','Real-time'],['pt','Path traced']].forEach(([k,t])=>{const b=segBtn($('rend'),t,()=>{if(rend===k)return;rend=k;paintModes();ptShow();if(k==='pt'&&!(PT&&PT.ready))busy(b,ptReadyP());});b.dataset.k=k;});
 const ptStat={set textContent(t){setStatus(t,t?'busy':'');}};
-function paintLegend(msg){if(!msg&&mode==='rgb'&&typeof LM!=='undefined'&&LM!=='hdri'&&SUNS){const pl=SUNP.place>=0?PLACES[SUNP.place][0]:SUNP.lat.toFixed(3)+', '+SUNP.lon.toFixed(3);msg='RGB: '+(LM==='wx'&&WX?'measured weather':'clear-sky')+' sun and sky for '+pl+', '+SUNP.date+' '+SUNP.time+(rend==='pt'?'':'')+'.';}$('legend').textContent=msg||(loadingName?'Loading HDRI '+loadingName+'…':LEG[mode]+(rend==='pt'&&mode!=='rgb'?' Labels come from the real-time pass.':''));}
+function paintLegend(msg){if(!msg&&mode==='rgb'&&typeof LM!=='undefined'&&LM!=='hdri'&&SUNS){const pl=SUNP.place>=0?PLACES[SUNP.place][0]:SUNP.lat.toFixed(3)+', '+SUNP.lon.toFixed(3);msg='RGB: '+(SUNS.night?(SUNS.src==='moon'?'moonlit night':'moonless night'):(LM==='wx'&&WX?'measured weather':'clear-sky')+' sun and sky')+' for '+pl+', '+SUNP.date+' '+SUNP.time+(rend==='pt'?'':'')+'.';}$('legend').textContent=msg||(loadingName?'Loading HDRI '+loadingName+'…':LEG[mode]+(rend==='pt'&&mode!=='rgb'?' Labels come from the real-time pass.':''));}
 function paintModes(){$('modeSel').value=mode;[...$('modes').querySelectorAll('button')].forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===mode));[...$('rend').querySelectorAll('button')].forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===rend));paintLegend();}
 BABYLON.Effect.ShadersStore.lblVertexShader='precision highp float;attribute vec3 position;attribute vec3 normal;uniform mat4 world;uniform mat4 view;uniform mat4 viewProjection;varying vec3 vN;varying float vZ;void main(){vec4 wp=world*vec4(position,1.0);vec4 vp=view*wp;vZ=-vp.z;vN=normalize(mat3(view)*mat3(world)*normal);gl_Position=viewProjection*wp;}';
 BABYLON.Effect.ShadersStore.lblFragmentShader='precision highp float;varying vec3 vN;varying float vZ;uniform float md;void main(){if(md<0.5){float d=1.0-clamp((vZ-0.25)/1.55,0.0,1.0);gl_FragColor=vec4(vec3(d),1.0);}else{gl_FragColor=vec4(normalize(vN)*0.5+0.5,1.0);}}';
@@ -848,7 +889,7 @@ bm.indexOfRefraction=p.ior;bm._t=p.t;bm.subSurface.isRefractionEnabled=false;
 // real-time glass: alpha-blended with Fresnel reflections kept opaque; the path tracer does true refraction
 if(p.t>0){bm.alpha=1-0.92*p.t;bm.transparencyMode=BABYLON.Material.MATERIAL_ALPHABLEND;bm.useRadianceOverAlpha=true;bm.useSpecularOverAlpha=true;bm.backFaceCulling=false;bm.needDepthPrePass=false;}
 else{bm.alpha=1;bm.transparencyMode=BABYLON.Material.MATERIAL_OPAQUE;bm.backFaceCulling=true;}
-updateCasters();paintSlots();ptMark('mat');kick(40,3);}
+updateCasters();paintSlots();ptMark('mat');kick(40,10);}
 function applyAll(){applyGen++;return Promise.all(Object.keys(SM).map(k=>applySlot(k,applyGen)));}
 // ---------- iPhone model: one download, two instances (front up, back up)
 const b64bytes=b64=>{const bin=atob(b64.trim()),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u;};
@@ -873,6 +914,7 @@ lt('avp','Vision Pro model','3.4 MB');
 const VISION=fetchBytes(TEX+'visionpro.glb',f=>ltp('avp',f),3357700);
 VISION.then(bytes=>BABYLON.LoadAssetContainerAsync(bytes,scene,{pluginExtension:'.glb'})).then(ct=>{
 if(ibl)try{ibl.addShadowReceivingMaterial(ct.materials);}catch(e){}
+ct.materials.forEach(m=>{m.emissiveTexture=null;if(m.emissiveColor)m.emissiveColor=new BABYLON.Color3(0,0,0);m.emissiveIntensity=0;});
 OB.filter(o=>o.name==='vision_pro').forEach(o=>instInto(ct,o,null));
 RES.visionpro={k:'visionpro',lut:null,set:null,m:1,r:0.3,ior:1.5,t:0,col:[0.91,0.92,0.92],note:'aluminium frame, laminated glass front, knit band',model:`glTF model · ${ct.meshes.length} meshes, ${ct.materials.length} materials, simplified to ~56k triangles`};
 updateCasters();paintSlots();ptMark('scene');update();ltd('avp');}).catch(e=>{console.error(e);ltd('avp');setStatus('Vision Pro could not load','');});
@@ -891,17 +933,17 @@ const VW=S.views[vi],C=VW.C,T=S.poi,f=S.focal;const fw=norm(sub(T,C)),rt=norm(cr
 const fx=f/SW*W,fov=2*Math.atan(SW/2/f);const P=p=>{const q=sub(p,C);const X=dot(q,rt),Y=dot(q,dn),Z=dot(q,fw);return{X,Y,Z,u:fx*X/Z+512,v:fx*Y/Z+512};};
 camR.position=V(...C);camR.upVector=new BABYLON.Vector3(0,1,0);camR.setTarget(V(...T));camR.fov=fov;
 const dist=Math.hypot(...sub(T,C));if(dp){dp.depthOfField.focusDistance=dist*1000;dp.depthOfField.focalLength=f;}
-VIEW={C,T,f,fov,dist};ptMark('cam');kick(40,3);
+VIEW={C,T,f,fov,dist};ptMark('cam');kick(40,10);
 if(frus)frus.dispose();const h=Math.tan(fov/2)*0.14,cp=V(...C),fv=V(...fw),rv=V(...rt),uv=V(...up),cc=cp.add(fv.scale(0.14));const k1=cc.add(rv.scale(h)).add(uv.scale(h)),k2=cc.add(rv.scale(-h)).add(uv.scale(h)),k3=cc.add(rv.scale(-h)).add(uv.scale(-h)),k4=cc.add(rv.scale(h)).add(uv.scale(-h));
 frus=markG(BABYLON.MeshBuilder.CreateLineSystem('fr',{lines:[[cp,k1],[cp,k2],[cp,k3],[cp,k4],[k1,k2,k3,k4,k1]]},scene));frus.color=C3(COL.cam);
 const R=S.rig,card=(h,rows)=>`<div class="card"><h3>${h}</h3><dl>${rows.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl></div>`;
 $('spec').innerHTML=card('Camera, view '+(vi+1),[['Elevation',(VW.el*180/Math.PI).toFixed(0)+'° (10–70)'],['Radius',VW.rad.toFixed(2)+' m (0.6–1.3)'],['Lens',f+' mm (24–70)'],['Focus',dist.toFixed(2)+' m']])
-+(LM!=='hdri'&&SUNS?card('Light · '+(LM==='wx'&&WX?'weather data':'clear sky'),[['Sun',SUNS.az.toFixed(1)+'° az, '+SUNS.elApp.toFixed(1)+'° el'],['Direct normal',SUNS.dni.toFixed(0)+' W/m²'],['Diffuse',SUNS.dhi.toFixed(0)+' W/m²'],['Sky',SUNS.sky.model==='perez'?'Perez bin '+SUNS.sky.bin:'CIE clear (12)'],['Exposure',ip.exposure.toFixed(2)+' metered']]):card('Light',[['HDRI',S.hdri.replace('_1k','')+' × '+S.strength+' at 50%'],['Key','×'+R.keyX+' HDRI irradiance'],['Key : fill',R.ratio+' : 1 (2–4)'],['Rim','×'+R.rimX+' key (0.3–0.6)'],['Exposure',ip.exposure.toFixed(2)+' metered']]))
++(LM!=='hdri'&&SUNS?card('Light · '+(LM==='wx'&&WX?'weather data':'clear sky'),(SUNS.night?[['Moon',SUNS.nt.moon.az.toFixed(1)+'° az, '+SUNS.nt.moon.elApp.toFixed(1)+'° el'],['Phase',Math.round(SUNS.nt.phase.frac*100)+'% lit'],['Moonlight',SUNS.nt.Elx.toFixed(3)+' lux'],['Sky','K&S 1991 + dark sky']]:[['Sun',SUNS.az.toFixed(1)+'° az, '+SUNS.elApp.toFixed(1)+'° el'],['Direct normal',SUNS.dni.toFixed(0)+' W/m²'],['Diffuse',SUNS.dhi.toFixed(0)+' W/m²'],['Sky',SUNS.sky.model==='perez'?'Perez bin '+SUNS.sky.bin:'CIE clear (12)']]).concat([['Exposure',ip.exposure.toFixed(2)+' metered']])):card('Light',[['HDRI',S.hdri.replace('_1k','')+' × '+S.strength+' at 50%'],['Key','×'+R.keyX+' HDRI irradiance'],['Key : fill',R.ratio+' : 1 (2–4)'],['Rim','×'+R.rimX+' key (0.3–0.6)'],['Exposure',ip.exposure.toFixed(2)+' metered']]))
 +card('Look',[['Tabletop',TSI[S.table].name],['Mugs on the holder',(6-S.nOff)+' of 6'],['Mugs on the table',String(S.nOff)],['Objects',OB.length+' instances, 4 classes']]);
 const o1=OB[0],Pw=toW(o1,HPO),pc=P(Pw);const vis=pc.Z>0&&pc.u>=0&&pc.u<=W&&pc.v>=0&&pc.v<=W;
 $('chain').innerHTML=crow(COL.obj,'1 Object (pivot 0,0,0)',f2(HPO)+' m')+cstep(`${o1.name} #${o1.inst} at (${o1.x.toFixed(2)}, ${o1.y.toFixed(2)}, 0), turned ${(o1.yaw*180/Math.PI).toFixed(0)}°`)+crow(COL.world,'2 World (table 0,0,0)',f2(Pw)+' m')+cstep('extrinsics of view '+(vi+1))+crow(COL.cam,'3 Camera (lens 0,0,0)',f2([pc.X,pc.Y,pc.Z])+' m')+cstep(`K: fx = ${f}/36 × 1024 = ${Math.round(fx)} px, cx = cy = 512`)+crow(COL.img,'4 Image (top-left 0,0)',pc.Z<=0?'behind camera':`u ${Math.round(pc.u)}, v ${Math.round(pc.v)}${vis?'':' (outside)'} px`);
 const M=[[rt[0],up[0],bk[0],C[0]],[rt[1],up[1],bk[1],C[1]],[rt[2],up[2],bk[2],C[2]],[0,0,0,1]];
-$('tj').textContent=`"fl_x": ${fx.toFixed(1)}, "fl_y": ${fx.toFixed(1)},\n"cx": 512, "cy": 512, "w": 1024, "h": 1024,\n"file_path": "images/view_${String(vi+1).padStart(3,'0')}.png",\n"transform_matrix": [   // camera-to-world\n`+M.map(r=>'  ['+r.map(n=>(n>=0?' ':'')+n.toFixed(3)).join(', ')+']').join(',\n')+'\n]'+(LM!=='hdri'&&SUNS?`,\n"light": {   // world: x east, y north, z up\n  "model": "${SUNS.sky.model==='perez'?'perez_all_weather':'cie_clear_12'}", "utc": "${new Date(SUNS.t).toISOString().slice(0,16)}Z",\n  "lat": ${SUNP.lat}, "lon": ${SUNP.lon}, "alt_m": ${SUNP.alt},\n  "sun_az_deg": ${SUNS.az.toFixed(3)}, "sun_el_deg": ${SUNS.elApp.toFixed(3)},\n  "dni_wm2": ${SUNS.dni.toFixed(1)}, "dhi_wm2": ${SUNS.dhi.toFixed(1)}, "ghi_wm2": ${SUNS.ghi.toFixed(1)}`+(WX&&LM==='wx'?`,\n  "source": "${WX.src}", "cloud_pct": ${WX.cloud==null?'null':Math.round(WX.cloud)}`:'')+'\n}':'');
+$('tj').textContent=`"fl_x": ${fx.toFixed(1)}, "fl_y": ${fx.toFixed(1)},\n"cx": 512, "cy": 512, "w": 1024, "h": 1024,\n"file_path": "images/view_${String(vi+1).padStart(3,'0')}.png",\n"transform_matrix": [   // camera-to-world\n`+M.map(r=>'  ['+r.map(n=>(n>=0?' ':'')+n.toFixed(3)).join(', ')+']').join(',\n')+'\n]'+(LM!=='hdri'&&SUNS?`,\n"light": {   // world: x east, y north, z up\n  "model": "${SUNS.night?'krisciunas_schaefer_1991_moon':SUNS.sky.model==='perez'?'perez_all_weather':'cie_clear_12'}", "utc": "${new Date(SUNS.t).toISOString().slice(0,16)}Z",\n  "lat": ${SUNP.lat}, "lon": ${SUNP.lon}, "alt_m": ${SUNP.alt},\n  "sun_az_deg": ${SUNS.az.toFixed(3)}, "sun_el_deg": ${SUNS.elApp.toFixed(3)},\n  "dni_wm2": ${SUNS.dni.toFixed(1)}, "dhi_wm2": ${SUNS.dhi.toFixed(1)}, "ghi_wm2": ${SUNS.ghi.toFixed(1)}`+(SUNS.night?`,\n  "moon_az_deg": ${SUNS.nt.moon.az.toFixed(3)}, "moon_el_deg": ${SUNS.nt.moon.elApp.toFixed(3)}, "moon_lit_frac": ${SUNS.nt.phase.frac.toFixed(3)}, "moonlight_lux": ${SUNS.nt.Elx.toFixed(4)}`:'')+(WX&&LM==='wx'?`,\n  "source": "${WX.src}", "cloud_pct": ${WX.cloud==null?'null':Math.round(WX.cloud)}`:'')+'\n}':'');
 const boxes=[];let rows='';
 OB.forEach(o=>{o.g.computeWorldMatrix(true);o.g.getDescendants(false).forEach(n=>n.computeWorldMatrix&&n.computeWorldMatrix(true));const wp=[];o.meshes.forEach(me=>{if(me.isDisposed())return;me.getBoundingInfo().boundingBox.vectorsWorld.forEach(v=>wp.push([v.x,-v.z,v.y]));});
 if(wp.length){const c=[0,1].map(k=>(Math.min(...wp.map(p=>p[k]))+Math.max(...wp.map(p=>p[k])))/2);o.lb.position=V(c[0],c[1],Math.max(...wp.map(p=>p[2]))+0.03);}
@@ -987,6 +1029,7 @@ const [{GLTFLoader}]=await Promise.all([import('three/examples/jsm/loaders/GLTFL
 const loader=new GLTFLoader();let pn=0;const parse=async u=>{setStatus('Loading path-tracing models · '+(++pn)+' / 3','busy');const b=await fetchBytes(u);return await new Promise((res,rej)=>loader.parse(b.buffer,'',res,rej));};const gl=await parse(TEX+'iphone_pt.glb'),glH=await parse(TEX+'holder_pt.glb'),glA=await parse(TEX+'visionpro_pt.glb');setStatus('Preparing the scene for path tracing…','busy');
 // the path tracer merges all geometry: give it plain float attributes (the glTF uses interleaved / quantized ones)
 // phones: colour maps stay at full path-tracer resolution (the mugs read like desktop); roughness/metal maps on the props give way to their material values to save memory
+glA.scene.traverse(o=>{if(o.isMesh)[].concat(o.material).forEach(m=>{m.emissiveMap=null;m.emissive&&m.emissive.setRGB(0,0,0);m.emissiveIntensity=0;m.needsUpdate=true;});}); // Vision Pro is off: no emission
 if(PT_LITE)[glH,glA].forEach(G=>G.scene.traverse(o=>{if(o.isMesh)[].concat(o.material).forEach(m=>{m.roughnessMap=null;m.metalnessMap=null;m.needsUpdate=true;});}));
 [gl,glH,glA].forEach(G=>G.scene.traverse(o=>{if(!o.isMesh)return;const g=o.geometry;g.morphAttributes={};for(const k of Object.keys(g.attributes)){if(!['position','normal','uv'].includes(k)){g.deleteAttribute(k);continue;}const at=g.attributes[k];if(at.isInterleavedBufferAttribute||at.normalized||!(at.array instanceof Float32Array)){const n=at.count,sz=at.itemSize,arr=new Float32Array(n*sz);for(let i=0;i<n;i++)for(let j=0;j<sz;j++)arr[i*sz+j]=at.getComponent(i,j);g.setAttribute(k,new T.BufferAttribute(arr,sz));}}}));
 OB.forEach((o,i)=>{if(o.name!=='phone')return;const c=PH[o.side];const Tn=new T.Group();Tn.position.set(0,0,c.tz);Tn.rotation.x=c.ta;const Mn=new T.Group();Mn.position.set(...c.p);Mn.rotation.x=c.rx;Mn.add(gl.scene.clone(true));Tn.add(Mn);groups[i].add(Tn);});
@@ -1011,7 +1054,7 @@ PT_TINY=true;toast('The GPU reset; path tracing continues at a lighter setting')
 // lights + sky for the path tracer: the studio rig in HDRI mode, the sun otherwise (same numbers as the real-time view)
 function ptLightsEnv(){const {tS,lights,envTex}=PT;const sunOn=LM!=='hdri'&&!!SUNS;
 ['key','fill','rim'].forEach(k=>{const b=rig[k],l=lights[k];l.position.set(b.position.x,b.position.y,b.position.z);const t=V(...S.poi);l.target.position.set(t.x,t.y,t.z);l.color.setRGB(b.diffuse.r,b.diffuse.g,b.diffuse.b);l.intensity=b.intensity/BAB_K;l.angle=b.angle/2;l.penumbra=PEN;l.decay=2;l.castShadow=true;l.visible=!sunOn;l.updateMatrixWorld();l.target.updateMatrixWorld();});
-const sp=lights.sun;if(sunOn){const d=SUNS.dir;sp.position.set(d[0]*10,d[1]*10,d[2]*10);sp.target.position.set(0,0,0);sp.color.setRGB(...SUNS.sunRGB);sp.intensity=d[1]>0&&!SUNS.night?SUNS.dni*SUNK:0;sp.visible=sp.intensity>0;}else sp.visible=false;sp.updateMatrixWorld();sp.target.updateMatrixWorld();
+const sp=lights.sun;if(sunOn){const d=SUNS.dir;sp.position.set(d[0]*10,d[1]*10,d[2]*10);sp.target.position.set(0,0,0);sp.color.setRGB(...SUNS.lRGB);sp.intensity=d[1]>0&&SUNS.src!=='none'?SUNS.E*SUNK:0;sp.visible=sp.intensity>0;}else sp.visible=false;sp.updateMatrixWorld();sp.target.updateMatrixWorld();
 const ei=sunOn?1:S.strength*HDRI_SHARE;const et=curEnv&&envTex(curEnv.name);tS.environment=et;tS.background=et;tS.environmentRotation.set(0,ENVFIX.rotY,0);tS.backgroundRotation.set(0,ENVFIX.rotY,0);tS.environmentIntensity=ei;tS.backgroundIntensity=ei;}
 function ptSync(){const {T,pt,tS,cam,groups,pairs,lights,tmat,envTex}=PT;const need=new Set(ptDirty);ptDirty.clear();
 if(need.has('scene')||need.has('mat')||need.has('light')||need.has('env')||!PT.ready){
