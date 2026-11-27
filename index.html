@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c0d10">
+<title>Synthetic dataset scene — Richard Hui</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Geist:wght@400..700&family=Geist+Mono:wght@500&display=swap">
+<script type="importmap">{"imports":{
+"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+"three/":"https://cdn.jsdelivr.net/npm/three@0.170.0/",
+"three-mesh-bvh":"https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.8.3/build/index.module.js",
+"three-gpu-pathtracer":"https://cdn.jsdelivr.net/npm/three-gpu-pathtracer@0.0.23/build/index.module.js"}}</script>
+<style>
+/* VOICE a case-study page inside richardhui.com: technical, calm, confident
+   IDEA a camera operator's monitor: the rendered frame is the hero, the controls sit where a thumb or cursor already is
+   PICTURE the live 3D render, large, with label boxes, pixel origin and a scene overview beside it
+   COLOUR the portfolio's own tokens: near-black ground, warm white ink, orange accent, blue/lime/orange category dots
+   TYPE Bricolage Grotesque 800 for display, Geist for text, Geist Mono for labels and numbers
+   LAYOUT laptop: render left, scene controls right, details in tabs below; phone: render, a thumb dock at the bottom, collapsible panels */
+:root{color-scheme:dark;--bg:#0c0d10;--bg-2:#13151a;--bg-3:#1b1e25;--bg-4:#252932;--line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.14);--text:#eeece7;--mute:#9a9ba4;--accent:#ff5a36;--c3d:#6cb8ff;--cgames:#c4f04d;--cai:#ff5a36;--warn:#ffb547;
+--display:"Bricolage Grotesque","Geist",system-ui,sans-serif;--sans:"Geist",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;--out:cubic-bezier(.16,1,.3,1);--spring:cubic-bezier(.34,1.56,.64,1)}
+*{box-sizing:border-box;min-width:0}
+html{background:var(--bg);scroll-behavior:smooth;scroll-padding-top:16px}
+body{margin:0;background:var(--bg);color:var(--text);font:450 16px/1.55 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:clip}
+a{color:inherit}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:10px}
+[hidden]{display:none!important}
+::selection{background:var(--accent);color:var(--bg)}
+.mono{font-family:var(--mono)}
+.wrap{max-width:1280px;margin:0 auto;padding:0 max(4vw,16px,env(safe-area-inset-right)) 0 max(4vw,16px,env(safe-area-inset-left))}
+/* top bar, as on the portfolio */
+.top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;padding:22px 0 0}
+.back{justify-self:start;display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;padding:9px 15px;border-radius:999px;border:1px solid var(--line);text-decoration:none;transition:background .25s,color .25s,border-color .25s}
+.back:hover{background:var(--text);color:var(--bg);border-color:var(--text)}
+.wordmark{font:800 18px/1 var(--display);letter-spacing:.12em;text-decoration:none;white-space:nowrap}
+.top-r{justify-self:end;font:500 12px var(--mono);color:var(--mute)}
+/* hero */
+.hero{padding:clamp(28px,5vw,64px) 0 8px;display:grid;gap:18px;position:relative}
+.hero::before{content:"";position:absolute;inset:-40% -20% -10% 30%;background:radial-gradient(40% 50% at 70% 40%,rgba(255,90,54,.10),transparent 70%),radial-gradient(30% 40% at 20% 80%,rgba(108,184,255,.06),transparent 70%);pointer-events:none;z-index:-1}
+.kicker{margin:0;display:flex;align-items:center;gap:10px;font:500 13px var(--mono);color:var(--mute)}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--cgames);flex:none;animation:pulse 2.4s var(--out) infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(196,240,77,.5)}70%{box-shadow:0 0 0 10px rgba(196,240,77,0)}100%{box-shadow:0 0 0 0 rgba(196,240,77,0)}}
+h1{margin:0;font:800 clamp(44px,7vw,104px)/.9 var(--display);letter-spacing:-.035em;font-variation-settings:"opsz" 96;text-wrap:balance}
+h1 i{font-style:normal;color:var(--accent)}
+.lede{margin:0;color:var(--mute);max-width:62ch;font-size:17px}
+.cats{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:9px;padding:9px 15px 9px 13px;border-radius:999px;background:var(--bg-3);border:1px solid var(--line);font-weight:600;font-size:14px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}.d3d{background:var(--c3d)}.dgames{background:var(--cgames)}.dai{background:var(--cai)}
+/* stage */
+.stage{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px;align-items:start;margin-top:26px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px}
+.segs{display:inline-flex;gap:2px;padding:4px;border-radius:999px;background:var(--bg-2);border:1px solid var(--line);max-width:100%;overflow-x:auto;scrollbar-width:none}
+.segs::-webkit-scrollbar{display:none}
+.segs button{flex:none;font-weight:600;font-size:14px;color:var(--mute);padding:9px 14px;min-height:40px;border-radius:999px;transition:color .2s,background .25s}
+.segs button:hover{color:var(--text)}
+.segs button[aria-pressed=true]{background:var(--text);color:var(--bg)}
+.step{display:inline-flex;align-items:center;gap:2px;padding:4px;border-radius:999px;background:var(--bg-2);border:1px solid var(--line)}
+.step button,.ibtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:18px;line-height:1;color:var(--text);background:var(--bg-3);transition:background .2s,color .2s,transform .3s var(--spring)}
+.step button:hover,.ibtn:hover{background:var(--text);color:var(--bg)}
+.step button:active,.ibtn:active,.segs button:active,.btn:active{transform:scale(.94)}
+.step output{min-width:66px;text-align:center;font:500 13px var(--mono);font-variant-numeric:tabular-nums}
+.sel{font:600 14px var(--sans);color:var(--text);background:var(--bg-2);border:1px solid var(--line);border-radius:999px;padding:0 34px 0 16px;min-height:48px;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--mute) 50%),linear-gradient(135deg,var(--mute) 50%,transparent 50%);background-position:calc(100% - 18px) 21px,calc(100% - 13px) 21px;background-size:5px 5px;background-repeat:no-repeat}
+#modeSel{display:none}
+#camBox{position:relative;width:100%;aspect-ratio:1/1;border-radius:16px;overflow:hidden;background:var(--bg-2);border:1px solid var(--line);touch-action:pan-y;outline:none}
+#camBox canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#cPT{visibility:hidden}
+#ov{pointer-events:none}
+.navbtn{position:absolute;top:50%;z-index:4;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(12,13,16,.55);backdrop-filter:blur(6px);border:1px solid var(--line-2);font-size:20px;color:var(--text);display:grid;place-items:center;opacity:0;transition:opacity .25s,background .2s}
+#camBox:hover .navbtn,#camBox:focus-within .navbtn{opacity:1}
+.navbtn:hover{background:var(--text);color:var(--bg)}
+.navbtn.l{left:10px}.navbtn.r{right:10px}
+#pill{position:absolute;top:10px;right:10px;z-index:5;display:none;align-items:center;gap:8px;max-width:calc(100% - 20px);font:500 12px var(--mono);color:var(--text);background:rgba(12,13,16,.72);backdrop-filter:blur(8px);border:1px solid var(--line-2);border-radius:999px;padding:7px 12px;pointer-events:none}
+#pill.on{display:inline-flex;animation:pop .35s var(--out)}
+#pill .ic{width:12px;height:12px;flex:none}
+#prog{position:absolute;left:0;bottom:0;height:3px;background:var(--accent);z-index:5;width:0;transition:width .25s var(--out)}
+@keyframes pop{from{opacity:0;transform:translateY(-4px)}}
+.spin{width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.18);border-top-color:var(--accent);animation:spin .8s linear infinite;flex:none;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* first-load overlay */
+#load{position:absolute;inset:0;z-index:6;display:grid;place-items:center;background:radial-gradient(60% 60% at 50% 45%,rgba(255,90,54,.07),transparent 70%),var(--bg-2);transition:opacity .5s var(--out)}
+#load.gone{opacity:0;pointer-events:none}
+.load-in{width:min(320px,84%);display:grid;gap:12px}
+.load-in b{font:800 22px/1.1 var(--display);letter-spacing:-.01em}
+#loadList{list-style:none;margin:0;padding:0;display:grid;gap:7px;font:500 12px var(--mono);color:var(--mute)}
+#loadList li{display:flex;align-items:center;gap:9px}
+#loadList li.done{color:var(--text)}
+#loadList .ok{width:12px;height:12px;flex:none;color:var(--cgames)}
+#loadList .pct{margin-left:auto;font-variant-numeric:tabular-nums}
+.lbar{height:4px;border-radius:4px;background:var(--bg-4);overflow:hidden}.lbar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s var(--out)}
+.under{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+#legend{font-size:14px;color:var(--mute);flex:1 1 260px}
+.tog{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:13px;padding:9px 14px;min-height:40px;border-radius:999px;border:1px solid var(--line);color:var(--mute);transition:color .2s,border-color .2s,background .2s}
+.tog[aria-pressed=true]{color:var(--text);border-color:var(--line-2);background:var(--bg-3)}
+.tog .dot{background:var(--bg-4)}.tog[aria-pressed=true] .dot{background:var(--cgames)}
+#pre{font:500 12px var(--mono);color:var(--mute);display:inline-flex;align-items:center;gap:7px}
+/* side panel */
+.panel{display:grid;gap:12px}
+.card{background:var(--bg-2);border:1px solid var(--line);border-radius:16px;padding:16px}
+.card h2,.card summary{font:700 15px/1.2 var(--sans);margin:0;list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:24px}
+.card h2{cursor:default}
+.card summary::-webkit-details-marker{display:none}
+.card summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg) translate(-2px,-2px);transition:transform .25s var(--out);flex:none}
+details[open]>summary::after{transform:rotate(-135deg) translate(-2px,-2px)}
+.card summary .mono,.card h2 .mono{font-size:12px;font-weight:500;color:var(--mute);margin-left:auto}
+.ctl{display:grid;gap:14px;margin-top:14px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.row .lab{font-size:14px;color:var(--mute)}
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;padding:10px 16px;min-height:44px;border-radius:999px;background:var(--bg-3);border:1px solid var(--line);transition:background .2s,color .2s,transform .3s var(--spring)}
+.btn:hover{background:var(--text);color:var(--bg)}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.btn.accent:hover{background:var(--text);border-color:var(--text)}
+[aria-busy=true]{position:relative;pointer-events:none}
+[aria-busy=true]::after{content:"";position:absolute;right:8px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;border:2px solid rgba(255,255,255,.2);border-top-color:var(--accent);animation:spin .8s linear infinite}
+.segs button[aria-busy=true]{padding-right:30px}
+.rng label{display:flex;justify-content:space-between;font-size:14px;color:var(--mute)}
+.rng output{font:500 13px var(--mono);color:var(--text)}
+input[type=range]{width:100%;accent-color:var(--accent);min-height:36px;margin:2px 0 0}
+#cMain{display:block;width:100%;height:280px;border-radius:12px;background:var(--bg);margin-top:12px;touch-action:none;outline:none}
+#fx{display:grid;gap:2px;margin-top:10px}
+#fx label,.chk{display:flex;align-items:center;gap:10px;min-height:40px;cursor:pointer;font-size:14px;border-radius:10px;padding:0 6px}
+#fx label:hover{background:var(--bg-3)}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);margin:0;flex:none}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+fieldset:disabled{opacity:.4}
+#fxNote{font-size:12.5px;color:var(--mute);margin:8px 0 0}
+/* spec cards */
+#spec{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:26px}
+#spec .card{padding:14px 16px}
+#spec h3{margin:0 0 8px;font:600 12px var(--mono);color:var(--mute);display:flex;align-items:center;gap:8px}
+#spec .card:nth-child(1) h3::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c3d)}
+#spec .card:nth-child(2) h3::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+#spec .card:nth-child(3) h3::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--cgames)}
+#spec dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:13.5px}
+#spec dt{color:var(--mute)}#spec dd{margin:0;font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;text-align:right}
+/* detail tabs */
+.dtabs{display:flex;gap:8px;flex-wrap:wrap;margin:44px 0 20px;align-items:center}
+.dtabs h2{font:800 30px/1 var(--display);letter-spacing:-.02em;margin:0 16px 0 0}
+.dtabs button{display:inline-flex;align-items:center;gap:9px;padding:10px 16px;min-height:44px;border-radius:999px;background:var(--bg-3);border:1px solid var(--line);font-weight:600;font-size:14px;color:var(--mute);transition:transform .35s var(--spring),background .25s,color .25s}
+.dtabs button:hover{transform:translateY(-2px);color:var(--text)}
+.dtabs button[aria-selected=true]{background:var(--text);color:var(--bg)}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}
+h2.sec{font:700 17px/1.2 var(--sans);margin:0 0 12px}
+h3{font-size:15px;font-weight:700;margin:20px 0 8px}
+.lines{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 12px}
+.lines span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mute)}
+.lines i{display:inline-block;width:20px;height:4px;border-radius:2px}
+pre{font:500 12.5px/1.6 var(--mono);margin:0 0 12px;padding:14px 16px;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;overflow-x:auto;color:var(--text)}
+.tw{overflow-x:auto;border-radius:12px;border:1px solid var(--line);background:var(--bg-2)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+th{color:var(--mute);font-weight:500;font:500 12px var(--mono)}
+td.num{font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+.sw{display:inline-block;width:18px;height:18px;border-radius:5px;border:1px solid var(--line-2);vertical-align:middle;background-size:cover}
+.ok{color:var(--cgames)}.warn{color:var(--warn)}
+.p{color:var(--mute);margin:0 0 14px;max-width:72ch;font-size:15px}
+.pick{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;font-size:14px;margin-top:4px}
+.pick label{display:inline-flex;align-items:center;gap:10px;color:var(--mute)}
+input[type=search]{font:16px var(--sans);color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:0 18px;min-height:46px;width:100%}
+#lutList{max-height:400px;overflow-y:auto;margin-top:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg)}
+#lutList button{display:grid;grid-template-columns:22px minmax(0,1.4fr) minmax(0,.8fr) repeat(3,minmax(0,.45fr));gap:10px;align-items:center;width:100%;padding:10px 12px;min-height:46px;border-bottom:1px solid var(--line);font-size:13.5px;text-align:left;transition:background .15s}
+#lutList button:hover{background:var(--bg-3)}
+#lutList .m{font:500 12px var(--mono);color:var(--mute)}
+#sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:12px}
+#sets button{position:relative;text-align:left;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:8px;font-size:13px;line-height:1.35;transition:border-color .2s,transform .35s var(--spring)}
+#sets button:hover{border-color:var(--line-2);transform:translateY(-3px)}
+#sets button.on{border-color:var(--accent)}
+#sets button.loading::before{content:"Loading maps…";position:absolute;left:8px;right:8px;top:8px;aspect-ratio:1;display:grid;place-items:center;border-radius:9px;background:rgba(12,13,16,.7);font:500 12px var(--mono);z-index:1}
+#sets img{display:block;width:100%;aspect-ratio:1;border-radius:9px;margin-bottom:8px;background:var(--bg-3);object-fit:cover}
+#sets small{color:var(--mute);font-size:12px}
+ol.src{padding-left:20px;font-size:14px;line-height:1.65;margin:0;color:var(--mute)}
+ol.src li{margin:0 0 4px}
+ol.src a,#refs a,.lnk{color:var(--text);text-decoration:underline;text-decoration-color:var(--bg-4);text-underline-offset:3px;overflow-wrap:anywhere}
+ol.src a:hover,#refs a:hover{text-decoration-color:var(--accent)}
+#refs{font-size:13.5px;line-height:1.65;color:var(--mute)}
+#refs b{color:var(--text);font-weight:600}
+.note{font-size:13px;color:var(--mute);margin:26px 0 0;max-width:80ch}
+footer{margin:64px 0 32px;padding-top:20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px;color:var(--mute)}
+footer a{text-decoration:none}footer a:hover{color:var(--text)}
+/* toast */
+#toast{position:fixed;left:50%;bottom:24px;z-index:60;transform:translate(-50%,20px);opacity:0;display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px;background:var(--text);color:var(--bg);border-radius:999px;padding:11px 18px;box-shadow:0 12px 32px rgba(0,0,0,.45);transition:opacity .3s,transform .4s var(--out);pointer-events:none;max-width:calc(100vw - 24px)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+/* embed mode (inside the portfolio's viewer) */
+.embed .top,.embed footer,.embed .hero .cats{display:none}
+.embed .hero{padding-top:20px}
+@media(max-width:980px){.stage{grid-template-columns:minmax(0,1fr)}.cols{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:760px){
+  .top{grid-template-columns:auto 1fr;padding-top:14px}.top-r{display:none}.wordmark{justify-self:end;font-size:15px}
+  #modes{display:none}#modeSel{display:block}
+  .bar.dock{position:fixed;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));z-index:40;margin:0;justify-content:space-between;flex-wrap:nowrap;padding:6px;border-radius:22px;background:rgba(19,21,26,.92);backdrop-filter:blur(14px);border:1px solid var(--line-2);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+  .bar.dock .segs,.bar.dock .step{background:transparent;border-color:transparent}.bar.dock .sel{background-color:var(--bg-3);border-color:var(--line-2)}
+  .bar.dock #rend button{padding:9px 11px}
+  body.docked{padding-bottom:84px}
+  body.docked #toast{bottom:92px}
+  .navbtn{opacity:1;width:40px;height:40px}
+  #cMain{height:220px}
+  .dtabs h2{width:100%;margin-bottom:6px}
+  th,td{padding:8px 10px}
+  .cols>*,.panel,.viewer{min-width:0}.tw{max-width:100%}
+  .bar:not(.dock){flex-wrap:wrap}
+  .bar.dock .step{display:none}
+  .bar.dock .glab,.bar.dock .grp:nth-child(2){display:none}
+  .bar.dock .grp{flex-direction:row;align-items:center}.bar.dock .grp:nth-child(3){flex:1;min-width:0}
+  .bar.dock{gap:4px;overflow:hidden}.bar.dock #rend{flex:none}.bar.dock #rend button{font-size:13px;padding:9px 10px}.bar.dock #modeSel{min-height:40px;flex:1 1 0;min-width:0;width:0;padding-left:12px}
+  /* keep the render on screen while the controls scroll underneath it */
+  html,body{overflow-x:clip}
+  .stage{display:contents}
+  .viewer{margin-top:20px;position:sticky;top:0;z-index:30;background:var(--bg);margin:0 calc(-1*max(4vw,16px));padding:max(8px,env(safe-area-inset-top)) max(4vw,16px) 8px;box-shadow:0 12px 18px -14px rgba(0,0,0,.9)}
+  #camBox{width:min(100%,44vh);margin:0 auto}
+  .panel{margin-top:14px}
+  .viewer .under{margin-top:8px}
+  .viewer .under{flex-wrap:nowrap}.viewer #legend{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;font-size:12.5px}
+  .panel{position:relative;z-index:1}
+}
+
+.grp{display:flex;flex-direction:column;gap:6px;min-width:0}
+.glab{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);padding-left:14px}
+.glab em{font-style:normal;text-transform:none;letter-spacing:0;opacity:.7}
+.bar{align-items:flex-end;gap:10px 12px}
+#modes{border-color:var(--line-2)}
+#modes button{display:inline-flex;align-items:center;gap:7px}
+#modes button::before{content:"";width:14px;height:14px;border-radius:4px;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+#modes button[data-k=rgb]::before{background:linear-gradient(135deg,#c9a77a,#6b4c33 60%,#8a3045)}
+#modes button[data-k=depth]::before{background:linear-gradient(180deg,#fff,#111)}
+#modes button[data-k=normal]::before{background:conic-gradient(from 200deg,#8080ff,#ff8080,#80ff80,#8080ff)}
+#modes button[data-k=sem]::before{background:linear-gradient(90deg,#d85a32 50%,#7a73e0 50%)}
+#modes button[data-k=inst]::before{background:conic-gradient(#ff5a36 0 25%,#6cb8ff 0 50%,#c4f04d 0 75%,#ffd166 0)}
+#modes button[aria-pressed=true]::before{box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}
+
+/* Path traced is the headline feature: glowing pill with a sparkle until it's on */
+#rend button[data-k=pt]{position:relative;color:var(--text);isolation:isolate}
+#rend button[data-k=pt]::before{content:"\2726";margin-right:6px;color:var(--accent);display:inline-block;animation:twinkle 2.4s ease-in-out infinite}
+#rend button[data-k=pt][aria-pressed=false]{background:linear-gradient(var(--bg-3),var(--bg-3)) padding-box,linear-gradient(120deg,#ff5a36,#ffd166,#c4f04d,#6cb8ff,#ff5a36) border-box;background-size:100% 100%,300% 100%;border:1.5px solid transparent;animation:ptglow 2.8s ease-in-out infinite,ptsweep 6s linear infinite}
+#rend button[data-k=pt][aria-pressed=true]{background:linear-gradient(120deg,#ff5a36,#ffb35c);color:#0c0d10;box-shadow:0 0 22px rgba(255,90,54,.55)}
+#rend button[data-k=pt][aria-pressed=true]::before{color:#0c0d10;animation:none}
+@keyframes ptglow{0%,100%{box-shadow:0 0 0 0 rgba(255,90,54,0),0 0 10px rgba(255,90,54,.25)}50%{box-shadow:0 0 0 4px rgba(255,90,54,.12),0 0 24px rgba(255,90,54,.55)}}
+@keyframes ptsweep{to{background-position:0 0,300% 0}}
+@keyframes twinkle{0%,100%{transform:scale(1) rotate(0);opacity:1}50%{transform:scale(1.3) rotate(20deg);opacity:.7}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+<a class="back" href="/#work">← Work</a>
+<a class="wordmark" href="/">RICHARD HUI</a>
+<span class="top-r">Case study · 2026</span>
+</header>
+
+<section class="hero">
+<p class="kicker"><span class="pulse"></span>3D data engineering · Interactive case study</p>
+<h1>Synthetic dataset scene<i>.</i></h1>
+<p class="lede">One tabletop scene from a multi-view reconstruction spec: 50 calibrated cameras, five label maps, measured materials, and the exact numbers saved for every view.</p>
+<div class="cats"><span class="chip"><span class="dot d3d"></span>Real-time · Babylon.js</span><span class="chip"><span class="dot dgames"></span>Path traced · three.js</span><span class="chip"><span class="dot dai"></span>Measured PBR values</span></div>
+</section>
+
+<section class="stage" id="scene">
+<div class="viewer">
+<div class="bar" id="bar">
+<div class="grp"><span class="glab">Renderer</span><div class="segs" id="rend" role="group" aria-label="Renderer"></div></div>
+<div class="grp"><span class="glab">Camera</span><div class="step" role="group" aria-label="Camera view"><button type="button" id="vPrev" aria-label="Previous view">‹</button><output id="v_view">8 / 50</output><button type="button" id="vNext" aria-label="Next view">›</button></div></div>
+<div class="grp"><span class="glab">Output map <em>· pick one of 5</em></span><div class="segs" id="modes" role="group" aria-label="Output map"></div><select id="modeSel" class="sel" aria-label="Output map"></select></div>
+</div>
+<div id="camBox" tabindex="0" aria-label="Rendered camera view. Use the left and right arrow keys or swipe to change view.">
+<canvas id="cCam"></canvas><canvas id="cPT"></canvas><canvas id="ov" width="560" height="560"></canvas>
+<button type="button" class="navbtn l" id="vPrev2" aria-label="Previous view">‹</button><button type="button" class="navbtn r" id="vNext2" aria-label="Next view">›</button>
+<span id="pill" role="status" aria-live="polite"></span><span id="prog"></span>
+<div id="load"><div class="load-in"><b id="loadT">Loading the 3D engine</b><div class="lbar"><i id="loadB"></i></div><ul id="loadList"><li><span class="spin"></span>Babylon.js engine<span class="pct">7 MB</span></li></ul></div></div>
+</div>
+<div class="under"><span id="legend">Loading…</span><button type="button" class="tog" id="boxTog" aria-pressed="true"><span class="dot"></span>Label boxes</button></div>
+</div>
+
+<aside class="panel">
+<div class="card"><h2>Scene <span class="mono">1024 × 1024 px</span></h2>
+<div class="ctl">
+<div class="row"><span class="lab">Scene seed</span><div class="step"><button type="button" id="sPrev" aria-label="Previous scene">−</button><output id="v_seed">3</output><button type="button" id="sNext" aria-label="Next scene">+</button></div><button type="button" class="btn" id="shuffle">Shuffle</button></div>
+<input type="range" id="seed" min="0" max="19" step="1" value="3" hidden>
+<div class="rng"><label for="view">Camera view <output id="v_view2">8 / 50</output></label><input type="range" id="view" min="1" max="50" step="1" value="8"></div>
+<div class="rng"><label for="ev">Exposure <output id="v_ev"></output></label><input type="range" id="ev" min="-2" max="2" step="0.1" value="0"></div>
+</div></div>
+<details class="card" id="ovCard" open><summary>Scene overview <span class="mono">drag to orbit</span></summary><canvas id="cMain"></canvas></details>
+<details class="card" id="fxCard" open><summary>Real-time effects</summary><fieldset id="fxSet"><div id="fx"></div></fieldset><p id="fxNote">The path tracer computes shadows, occlusion, reflections and depth of field itself; only depth of field carries over.</p></details>
+</aside>
+</section>
+
+<div id="spec"></div>
+
+<nav class="dtabs" role="tablist" aria-label="Details"><h2>Details</h2>
+<button type="button" role="tab" data-p="numbers" aria-selected="true"><span class="dot d3d"></span>Numbers</button>
+<button type="button" role="tab" data-p="materials" aria-selected="false"><span class="dot dai"></span>Materials</button>
+<button type="button" role="tab" data-p="sources" aria-selected="false"><span class="dot dgames"></span>Sources</button>
+</nav>
+
+<section class="pane" id="numbers" role="tabpanel">
+<div class="lines"><span><i style="background:var(--accent)"></i>Object space</span><span><i style="background:var(--c3d)"></i>World space</span><span><i style="background:var(--cgames)"></i>Camera space</span><span><i style="background:#ffd166"></i>Image (pixels)</span></div>
+<div class="cols">
+<section><h2 class="sec">One point through every space</h2><div id="chain" style="display:grid;gap:5px;font-size:14px"></div></section>
+<section><h2 class="sec">Saved for this view</h2><pre id="tj"></pre><div class="tw"><table><thead><tr><th>Object</th><th>Class</th><th>Inst.</th><th>Box x, y, w, h (px)</th><th>Pose t (mm)</th></tr></thead><tbody id="objs"></tbody></table></div></section>
+</div>
+</section>
+
+<section class="pane" id="materials" role="tabpanel" hidden>
+<p class="p">Base colour, metalness, roughness and IOR come from a measured lookup table (linear sRGB). Every albedo is checked against the physically plausible range of 30–240 sRGB.</p>
+<div class="tw"><table><thead><tr><th>Surface</th><th>Lookup entry</th><th>Maps</th><th></th><th>Albedo (linear)</th><th>sRGB</th><th>Metal</th><th>Rough</th><th>IOR</th><th>F0</th><th>Check</th></tr></thead><tbody id="slotRows"></tbody></table></div>
+<div class="card" style="margin-top:14px">
+<h2>Assign a material</h2>
+<div class="pick" style="margin-top:12px">
+<label>Surface <select id="tgt" class="sel"><option value="table">Tabletop</option><option value="mug1">Mug #1</option><option value="mug2">Mug #2</option><option value="robot">Robot shell</option></select></label>
+<label class="chk"><input type="checkbox" id="calib">Calibrate scanned albedo to the lookup value</label>
+<button class="btn" type="button" id="reset">Back to scene defaults</button>
+</div>
+<div class="segs" id="tabs" style="margin-top:14px"><button type="button" data-t="sets" aria-pressed="true">Texture sets · 8</button><button type="button" data-t="lut" aria-pressed="false">Measured values · 122</button></div>
+<div id="setsPane"><div id="sets"></div><p class="note" style="margin-top:10px">Each set's colour, normal, AO / roughness / metal and displacement maps download only when you pick it.</p></div>
+<div id="lutPane" hidden><input type="search" id="q" placeholder="Search, for example gold, glass, skin" style="margin-top:12px" aria-label="Search the material table"><div id="lutList"><p style="padding:12px;color:var(--mute);font-size:13px;margin:0">Loading the table…</p></div></div>
+</div>
+</section>
+
+<section class="pane" id="sources" role="tabpanel" hidden>
+<ol class="src" id="srcList"></ol>
+<h3>Measurement references for the materials in this scene</h3>
+<div id="refs">Loading…</div>
+</section>
+
+<p class="note">The objects and their fine detail maps are generated in the browser. Tabletop textures are Poly Haven scans; the phones are a supplied glTF model with its own materials. Boxes are computed from each object's 3D box corners, so they run slightly looser than mask-based COCO boxes. The path tracer ignores displacement and screen-space effects; it computes shadows, occlusion and reflections directly.</p>
+
+<footer><a class="wordmark" href="/">RICHARD HUI</a><span><a href="mailto:richrdhw@gmail.com">richrdhw@gmail.com</a> · <a href="https://www.richardhui.com/#work" target="_blank" rel="noopener">More work ↗</a></span></footer>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/earcut@2.2.4/dist/earcut.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/babylonjs@9.38.0/babylon.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.38.0/babylon.glTF2FileLoader.min.js"></script>
+<script>
+{
+const $=id=>document.getElementById(id);
+if(/[?&]embed=1/.test(location.search)||location.hash==='#embed')document.body.classList.add('embed');
+// ---------- feedback: status pill on the render, toast for confirmations, busy buttons, first-load checklist
+const pill=$('pill'),prog=$('prog');
+const ICON_OK='<svg class="ic" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5l2.5 2.5L10 3.5" fill="none" stroke="#c4f04d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+let pillT=0,pillLast='';
+function setStatus(t,kind){const key=t+'|'+kind;if(key===pillLast)return;pillLast=key;clearTimeout(pillT);if(!t){pill.classList.remove('on');return;}pill.innerHTML=(kind==='busy'?'<span class="spin"></span>':(kind==='ok'||kind==='done')?ICON_OK:'')+'<span></span>';pill.lastChild.textContent=t;pill.classList.add('on');if(kind==='ok')pillT=setTimeout(()=>{pill.classList.remove('on');pillLast='';},1800);}
+const setProg=f=>{prog.style.width=f>0&&f<1?(f*100).toFixed(1)+'%':'0';};
+let toastT=0;function toast(t){const el=$('toast');el.innerHTML=ICON_OK.replace('#c4f04d','#0c0d10')+'<span></span>';el.lastChild.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),2200);}
+function busy(el,p){if(!el)return Promise.resolve(p);el.setAttribute('aria-busy','true');return Promise.resolve(p).catch(()=>{}).finally(()=>el.removeAttribute('aria-busy'));}
+const LT={};let loadDone=false;
+function lt(id,label,size){if(loadDone||LT[id])return;LT[id]={id,label,size,f:0,done:false};paintLoad();}
+function ltp(id,f){if(LT[id]&&!LT[id].done){LT[id].f=f;paintLoad();}}
+function ltd(id){if(LT[id]){LT[id].done=true;LT[id].f=1;paintLoad();}}
+function paintLoad(){if(loadDone)return;const ks=Object.values(LT);$('loadList').innerHTML=ks.map(t=>`<li class="${t.done?'done':''}">${t.done?ICON_OK.replace('class="ic"','class="ok"'):'<span class="spin"></span>'}<span>${t.label}</span><span class="pct">${t.done?'done':t.f>0?Math.round(t.f*100)+'%':(t.size||'')}</span></li>`).join('');const tot=ks.reduce((a,t)=>a+(t.done?1:t.f),0)/Math.max(1,ks.length);$('loadB').style.width=(tot*100).toFixed(0)+'%';const cur=ks.find(t=>!t.done);$('loadT').textContent=cur?(cur.id==='gpu'?'Compiling shaders':'Loading '+cur.label.split(' · ')[0].toLowerCase()):'Ready';}
+function finishLoad(){if(loadDone)return;loadDone=true;$('load').classList.add('gone');setTimeout(()=>{$('load').hidden=true;},600);}
+async function fetchBytes(url,onp,expect){const r=await fetch(url);if(!r.ok)throw new Error('HTTP '+r.status);const total=+r.headers.get('content-length')||expect||0;if(!r.body||!total){const b=new Uint8Array(await r.arrayBuffer());if(onp)onp(1);return b;}const rd=r.body.getReader(),parts=[];let got=0;for(;;){const {done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;if(onp)onp(Math.min(1,got/Math.max(total,expect||0)));}const u=new Uint8Array(got);let o=0;for(const p of parts){u.set(p,o);o+=p.length;}return u;}
+const toB64=u=>{let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s);};
+async function fetchText(url,onp,expect){const r=await fetch(url);if(!r.ok)throw new Error('HTTP '+r.status);const total=+r.headers.get('content-length')||expect||0;if(!r.body||!total){const t=await r.text();if(onp)onp(1);return t;}const rd=r.body.getReader(),parts=[];let got=0;for(;;){const {done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;if(onp)onp(Math.min(1,got/Math.max(total,expect||0)));}const u=new Uint8Array(got);let o=0;for(const p of parts){u.set(p,o);o+=p.length;}return new TextDecoder().decode(u);}
+const SOURCES=[
+['Physically Based: a database of measured PBR values (CC0), API v2','https://api.physicallybased.info/v2/materials'],
+['physically-based-api repository, A. Palmqvist','https://github.com/AntonPalmqvist/physically-based-api'],
+['Poly Haven texture library (CC0)','https://polyhaven.com/textures'],
+['Poly Haven licence (CC0)','https://polyhaven.com/license'],
+['zuujis-cc0 mirror of Poly Haven textures, with SHA-256 manifest (source of the files bundled here)','https://github.com/zuujis-cc0/free-game-assets'],
+['Poly Haven HDRIs: Royal Esplanade, Venice Sunset, Pedestrian Overpass, Quarry 01 (1K files from the three.js examples)','https://github.com/mrdoob/three.js/tree/dev/examples/textures/equirectangular'],
+['S. Lagarde, DONTNOD physically based rendering chart for Unreal Engine 4','https://seblagarde.wordpress.com/2014/04/14/dontnod-physically-based-rendering-chart-for-unreal-engine-4/'],
+['S. Lagarde and C. de Rousiers, Moving Frostbite to Physically Based Rendering 3.0 (SIGGRAPH 2014)','https://cgvr.informatik.uni-bremen.de/teaching/cg_literatur/Moving%20Frostbite%20to%20Physically%20Based%20Rendering%203.0,%202014,%20Sebastien%20Lagarde.pdf'],
+['Unity, The Dark Dielectric Materials (measured albedo of dark materials)','https://docs-alpha.unity3d.com/cn/2018.1/uploads/ExpertGuides/Dark_Dielectric_Materials.pdf'],
+['Epic Games, Physically based materials in Unreal Engine','https://dev.epicgames.com/documentation/en-us/unreal-engine/physically-based-materials-in-unreal-engine'],
+['Google Filament, Crafting physically based materials','https://google.github.io/filament/notes/material_properties.html'],
+['RenderHub, PBR albedo reflectance picker (30–240 sRGB range)','https://www.renderhub.com/3d-tools/pbr-albedo-reflectance-picker'],
+['S. Shin, PBR, colour space conversion and albedo chart','https://shinsoj.artstation.com/blog/Q9j6/pbr-color-space-conversion-and-albedo-chart'],
+['Wikipedia, Albedo','https://en.wikipedia.org/wiki/Albedo'],
+['MERL BRDF database: 100 measured materials (Matusik et al. 2003)','https://cfg.mit.edu/wojciech/brdfdatabase/'],
+['W. Matusik, H. Pfister, M. Brand, L. McMillan, A Data-Driven Reflectance Model, ACM TOG 22(3) 2003','https://doi.org/10.1145/882262.882343'],
+['EPFL Realistic Graphics Lab, measured material database','https://rgl.epfl.ch/pages/lab/material-database'],
+['Microsoft, Announcing Babylon.js 8.0 (IBL shadows)','https://blogs.windows.com/windowsdeveloper/2025/03/27/announcing-babylon-js-8-0/'],
+['Babylon.js IblShadowsRenderPipeline API (type definitions)','https://app.unpkg.com/@babylonjs/core@9.18.0/files/Rendering/IBLShadows/iblShadowsRenderPipeline.pure.d.ts'],
+['Apple iPhone 18 Pro Max, Burgundy: glTF model supplied with this project (file metadata: Binkies MDM 3.3 conversion); licence as stated where it was obtained',''],
+['Babylon.js documentation','https://doc.babylonjs.com/'],
+['C. Peters, Free blue noise textures (CC0), bundled for IBL shadow sampling','https://momentsingraphics.de/BlueNoise.html'],
+['three-gpu-pathtracer, G. Johnson','https://github.com/gkjohnson/three-gpu-pathtracer'],
+['three-mesh-bvh, G. Johnson','https://github.com/gkjohnson/three-mesh-bvh'],
+['three.js','https://threejs.org/'],
+['OpenCV camera calibration and the pinhole model','https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html'],
+['Nerfstudio data conventions (transforms.json, camera-to-world)','https://docs.nerf.studio/quickstart/data_conventions.html']];
+$('srcList').innerHTML=SOURCES.map(([t,u])=>`<li>${t}.${u?` <a href="${u}" target="_blank" rel="noopener">${u.replace(/^https?:\/\//,'')}</a>`:''}</li>`).join('');
+if(!window.BABYLON){$('legend').textContent='Babylon.js could not load.';$('loadT').textContent='The 3D engine could not load. Check the connection and reload.';}else{
+lt('engine','Babylon.js engine','7 MB');ltd('engine');
+const W=1024,SW=36,DPR=Math.min(1.5,devicePixelRatio),DPR_MAIN=Math.min(1.25,devicePixelRatio);
+const COL={obj:'#ff5a36',world:'#6cb8ff',cam:'#c4f04d',img:'#ffd166'};
+const TEX=window.DS_ASSETS||'https://cdn.jsdelivr.net/gh/qpaoziwu/dataset-scene@v1/assets/';const PHC='https://dl.polyhaven.org/file/ph-assets/';
+const HDRS=['royal_esplanade_1k','venice_sunset_1k','pedestrian_overpass_1k','quarry_01_1k'];
+BABYLON.Tools.PreprocessUrl=u=>u.replace('https://assets.babylonjs.com/core/blue_noise/',TEX); // IBL shadows' blue-noise texture, bundled (CC0)
+const HDRI_SHARE=0.5;
+const BAB_K=1; // with glTF falloff both engines read spot intensity as candela: no correction needed (measured)
+const ENVFIX={rotY:Math.PI/2,mirror:false}; // aligns three.js equirect lookup with Babylon's cube conversion
+ // HDRI lighting scaled by half; the 3-point rig carries the rest
+const V=(x,y,z)=>new BABYLON.Vector3(x,z,-y);
+const C3=h=>BABYLON.Color3.FromHexString(h);
+// ---------- measured values (Physically Based, CC0) inlined for the scene defaults; the full table loads on demand
+const LUT0={'Porcelain':['Manmade',[0.745,0.745,0.723],0,0,1.5,0],'Glass (Soda-lime)':['Crystal',[0.984,0.995,0.995],0,0,1.52,1],'Aluminum':['Metal',[0.916,0.923,0.924],1,0,null,0],'Plastic (PP)':['Plastic',[1,1,1],0,0,1.492,1],'Marble':['Crystal',[0.83,0.791,0.753],0,0,1.5,0],'Concrete':['Manmade',[0.51,0.51,0.51],0,0.5,1.5,0]};
+let LUT=null;
+const lutGet=n=>{const a=(LUT&&LUT[n])||LUT0[n];return a?{n,c:a[0],rgb:a[1],m:a[2],r:a[3],ior:a[4],t:a[5]||0}:null;};
+const TS=[{"id":"oak_veneer_01","name":"Oak Veneer 01","by":"Jenelle van Heerden","src":"https://polyhaven.com/a/oak_veneer_01","mean":[0.3598,0.2111,0.0984],"lut":null,"kb":2084},{"id":"american_walnut_veneer","name":"American Walnut Veneer","by":"Jenelle van Heerden","src":"https://polyhaven.com/a/american_walnut_veneer","mean":[0.1701,0.1573,0.1428],"lut":null,"kb":1816},{"id":"marble_01","name":"Marble 01","by":"Rob Tuytel","src":"https://polyhaven.com/a/marble_01","mean":[0.4431,0.3379,0.1945],"lut":null,"kb":537},{"id":"granite_tile","name":"Granite Tile","by":"Charlotte Baglioni","src":"https://polyhaven.com/a/granite_tile","mean":[0.0765,0.0774,0.0779],"lut":null,"kb":2342},{"id":"terrazzo_tiles","name":"Terrazzo Tiles","by":"Amal Kumar","src":"https://polyhaven.com/a/terrazzo_tiles","mean":[0.2563,0.1588,0.1011],"lut":null,"kb":1774},{"id":"brushed_concrete","name":"Brushed Concrete","by":"Dario Barresi, Dimitrios Savva","src":"https://polyhaven.com/a/brushed_concrete","mean":[0.1475,0.1266,0.0991],"lut":"Concrete","kb":2908},{"id":"clay_plaster","name":"Clay Plaster","by":"Amal Kumar","src":"https://polyhaven.com/a/clay_plaster","mean":[0.1693,0.1023,0.045],"lut":null,"kb":1873},{"id":"metal_plate","name":"Metal Plate","by":"Rob Tuytel","src":"https://polyhaven.com/a/metal_plate","mean":[0.0494,0.0339,0.0125],"lut":null,"kb":2780}];
+const TSI=Object.fromEntries(TS.map(t=>[t.id,t]));
+const lum=c=>0.2126*c[0]+0.7152*c[1]+0.0722*c[2];
+const l2s=x=>{x=Math.max(0,Math.min(1,x));return x<=0.0031308?12.92*x:1.055*Math.pow(x,1/2.4)-0.055;};
+const s2l=x=>x<=0.04045?x/12.92:Math.pow((x+0.055)/1.055,2.4);
+const hex=c=>'#'+c.map(v=>Math.round(l2s(v)*255).toString(16).padStart(2,'0')).join('');
+// ---------- procedural detail maps
+function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function noise(seed){const r=rng(seed),g=new Float32Array(65536);for(let i=0;i<65536;i++)g[i]=r();const sm=t=>t*t*(3-2*t);return(x,y)=>{const xi=Math.floor(x),yi=Math.floor(y),u=sm(x-xi),v=sm(y-yi),X0=xi&255,X1=(xi+1)&255,Y0=(yi&255)<<8,Y1=((yi+1)&255)<<8;const a=g[Y0|X0],b=g[Y0|X1],c=g[Y1|X0],d=g[Y1|X1];return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;};}
+const fbm=(n,x,y,o)=>{let s=0,a=0.5,f=1,t=0;for(let i=0;i<o;i++){s+=a*n(x*f,y*f);t+=a;a*=0.5;f*=2;}return s/t;};
+function blur(A,S,r){const T=new Float32Array(S*S),O=new Float32Array(S*S),n=2*r+1;for(let j=0;j<S;j++){let s=0;for(let k=-r;k<=r;k++)s+=A[j*S+((k+S)%S)];for(let i=0;i<S;i++){T[j*S+i]=s/n;s+=A[j*S+((i+r+1)%S)]-A[j*S+((i-r+S)%S)];}}for(let i=0;i<S;i++){let s=0;for(let k=-r;k<=r;k++)s+=T[((k+S)%S)*S+i];for(let j=0;j<S;j++){O[j*S+i]=s/n;s+=T[((j+r+1)%S)*S+i]-T[((j-r+S)%S)*S+i];}}return O;}
+const gridH=(S,fn)=>{const H=new Float32Array(S*S);for(let j=0;j<S;j++)for(let i=0;i<S;i++)H[j*S+i]=fn(i/S,j/S);return H;};
+const cnv=(arr,S)=>{const c=document.createElement('canvas');c.width=c.height=S;c.getContext('2d').putImageData(new ImageData(arr,S,S),0,0);return c;};
+// albedo = near-white detail (the measured colour is applied on top); G = roughness variation 0.7–1.0 (scaled to the measured roughness); B = 1 (metalness comes from the table)
+function makeSet(S,H,al,ro,ns,aoK){const bl=blur(H,S,3),A=new Uint8ClampedArray(S*S*4),N=new Uint8ClampedArray(S*S*4),O=new Uint8ClampedArray(S*S*4);let ma=[0,0,0],mr=0;
+for(let j=0;j<S;j++)for(let i=0;i<S;i++){const k=j*S+i,q=k*4,h=H[k],u=i/S,v=j/S;const L=H[j*S+((i-1+S)%S)],R=H[j*S+((i+1)%S)],Up=H[((j-1+S)%S)*S+i],Dn=H[((j+1)%S)*S+i];const nx=-(R-L)*ns,ny=(Dn-Up)*ns,l=Math.hypot(nx,ny,1);N[q]=(nx/l*0.5+0.5)*255;N[q+1]=(ny/l*0.5+0.5)*255;N[q+2]=(1/l*0.5+0.5)*255;N[q+3]=255;
+const c=al(u,v,h);A[q]=c[0];A[q+1]=c[1];A[q+2]=c[2];A[q+3]=255;for(let z=0;z<3;z++)ma[z]+=s2l(Math.min(255,c[z])/255);const rr=ro(u,v,h);mr+=rr;O[q]=Math.max(0.35,Math.min(1,1-(bl[k]-h)*aoK))*255;O[q+1]=rr*255;O[q+2]=255;O[q+3]=255;}
+return{al:cnv(A,S),n:cnv(N,S),orm:cnv(O,S),mean:ma.map(x=>x/(S*S)),rmean:mr/(S*S)};}
+const n1=noise(11),n2=noise(23),n3=noise(37);const RAW={};
+RAW.ceramic=makeSet(256,gridH(256,(u,v)=>fbm(n1,u*16,v*16,4)*0.6),(u,v,h)=>{const sp=n2(u*96,v*96)>0.955?0.6:1;const b=(0.96+0.04*h)*sp*255;return[b,b,b];},(u,v,h)=>0.8+0.2*fbm(n3,u*4,v*4,3),1.2,6);
+RAW.metal=makeSet(256,gridH(256,(u,v)=>fbm(n1,u*4,v*256,3)),(u,v,h)=>{const b=(0.93+0.07*h)*255;return[b,b,b];},(u,v,h)=>0.75+0.25*h,2.2,2);
+RAW.plastic=makeSet(256,gridH(256,(u,v)=>fbm(n2,u*64,v*64,3)*0.12-0.9*Math.exp(-Math.pow((v-0.32)/0.008,2))),(u,v,h)=>{const d=Math.min(1,Math.max(0.55,1+h*0.5))*(0.96+0.04*fbm(n3,u*8,v*8,3))*255;return[d,d,d];},(u,v,h)=>0.75+0.25*fbm(n3,u*6,v*6,4),3.5,10);
+RAW.paper=makeSet(256,gridH(256,(u,v)=>fbm(n3,u*64,v*64,4)),(u,v,h)=>{const b=(0.95+0.05*h)*255;return[b,b,b];},(u,v,h)=>0.9+0.1*h,0.8,2);
+RAW.smudge=makeSet(256,gridH(256,()=>0),()=>[255,255,255],(u,v)=>{const s=fbm(n2,u*6,v*6,5);return 0.03+Math.max(0,s-0.48)*0.9;},0,0);
+// ---------- engine
+const cMain=$('cMain'),cCam=$('cCam'),cPT=$('cPT');
+const work=document.createElement('canvas');work.width=work.height=8;
+const engine=new BABYLON.Engine(work,true,{stencil:true,preserveDrawingBuffer:false},true);
+const scene=new BABYLON.Scene(engine);scene.useRightHandedSystem=true;scene.clearColor=new BABYLON.Color4(0,0,0,0);
+const ip=scene.imageProcessingConfiguration;ip.toneMappingEnabled=true;ip.toneMappingType=BABYLON.ImageProcessingConfiguration.TONEMAPPING_KHR_PBR_NEUTRAL;
+const flatIP=new BABYLON.ImageProcessingConfiguration();flatIP.toneMappingEnabled=false;flatIP.exposure=1;flatIP.contrast=1;
+const tex=(c,gamma,rep)=>{const t=new BABYLON.Texture(c.toDataURL(),scene);t.gammaSpace=gamma;t.wrapU=t.wrapV=BABYLON.Texture.WRAP_ADDRESSMODE;t.anisotropicFilteringLevel=8;if(rep){t.uScale=rep[0];t.vScale=rep[1];}t._src=c;t._gamma=gamma;return t;};
+const PSET={};const pset=(k,rep)=>{const key=k+rep;if(!PSET[key])PSET[key]={al:tex(RAW[k].al,true,rep),n:tex(RAW[k].n,false,rep),orm:tex(RAW[k].orm,false,rep),mean:RAW[k].mean,rmean:RAW[k].rmean};return PSET[key];};
+const pbr=name=>{const m=new BABYLON.PBRMaterial(name,scene);Object.assign(m,{useRoughnessFromMetallicTextureAlpha:false,useRoughnessFromMetallicTextureGreen:true,useMetallnessFromMetallicTextureBlue:true,useAmbientOcclusionFromMetallicTextureRed:true});return m;};
+// one material per surface slot; the lookup table drives its numbers
+const SM={table:pbr('table'),mug1:pbr('mug1'),mug2:pbr('mug2'),robot:pbr('robot')};
+const SLOT_TEX={table:['paper',[4,3]],mug1:['ceramic',[3,1]],mug2:['ceramic',[3,1]],robot:['plastic',null]};
+const SLOT_REP={table:[2,1.4],mug1:[1,1],mug2:[1,1],robot:[0.6,0.6]};
+// ---------- 3-point light rig, fixed in world space so all 50 views see the same lighting
+const PEN=0.4; // soft edge: falloff starts at 60% of the cone, same shape in both renderers
+const spot=(n,a)=>{const l=new BABYLON.SpotLight(n,BABYLON.Vector3.Zero(),new BABYLON.Vector3(0,-1,0),a,1,scene);l.falloffType=BABYLON.Light.FALLOFF_GLTF;l.innerAngle=a*(1-PEN);return l;};
+const rig={key:spot('key',1.2),fill:spot('fill',1.5),rim:spot('rim',0.7)};
+const K2RGB={5600:[1,0.94,0.89],6500:[0.93,0.95,1],4300:[1,0.84,0.68]};
+rig.key.diffuse=BABYLON.Color3.FromArray(K2RGB[5600]);rig.fill.diffuse=BABYLON.Color3.FromArray(K2RGB[6500]);rig.rim.diffuse=BABYLON.Color3.FromArray(K2RGB[4300]);
+Object.values(rig).forEach(l=>{l.shadowMinZ=0.2;l.shadowMaxZ=4;l.specular=l.diffuse;});
+const sg=new BABYLON.ShadowGenerator(1024,rig.key);sg.bias=0.0002;sg.normalBias=0.01;sg.useContactHardeningShadow=true;sg.contactHardeningLightSizeUVRatio=0.06;sg.filteringQuality=BABYLON.ShadowGenerator.QUALITY_MEDIUM;sg.transparencyShadow=true;
+const GIZ=0x10000000,ALL=0x0FFFFFFF;
+const gizMat=c=>{const m=new BABYLON.StandardMaterial('g',scene);m.disableLighting=true;m.emissiveColor=C3(c);return m;};
+const markG=m=>{m.layerMask=GIZ;m.isPickable=false;return m;};
+const table=BABYLON.MeshBuilder.CreateBox('table',{width:3,height:0.04,depth:2},scene);table.position.y=-0.02;table.receiveShadows=true;table.material=SM.table;table.metadata={rgb:SM.table,desc:{t:'box',w:3,h:0.04,d:2}};
+const SEMC={1:'#D85A30',2:'#7F77DD',3:'#1D9E75'};
+const flatMat=c=>{const m=new BABYLON.StandardMaterial('f',scene);m.disableLighting=true;m.emissiveColor=C3(c);m.imageProcessingConfiguration=flatIP;return m;};
+const semBg=flatMat('#2C2C2A');
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);return tex(c,true);}
+const faceTex=canvasTex(256,160,(x,w,h)=>{x.fillStyle='#0b0b0b';x.fillRect(0,0,w,h);x.fillStyle='#9FE1CB';x.beginPath();x.arc(80,70,22,0,7);x.arc(176,70,22,0,7);x.fill();});
+const glassy=(name,t,ei)=>{const m=new BABYLON.PBRMaterial(name,scene);Object.assign(m,{albedoTexture:t,emissiveTexture:t,emissiveColor:BABYLON.Color3.White(),emissiveIntensity:ei,metallic:0,roughness:0.05,indexOfRefraction:1.52,backFaceCulling:false});return m;};
+const visMat=glassy('vis',faceTex,0.5);
+const rrect=(w,d,r)=>{const p=[],seg=6;[[w/2-r,d/2-r,0],[-w/2+r,d/2-r,Math.PI/2],[-w/2+r,-d/2+r,Math.PI],[w/2-r,-d/2+r,1.5*Math.PI]].forEach(([cx,cz,a0])=>{for(let i=0;i<=seg;i++){const a=a0+i/seg*Math.PI/2;p.push([cx+r*Math.cos(a),cz+r*Math.sin(a)]);}});return p;};
+const extr=(n,w,d,h,r)=>{try{return BABYLON.MeshBuilder.ExtrudePolygon(n,{shape:rrect(w,d,r).map(p=>new BABYLON.Vector3(p[0],0,p[1])),depth:h,sideOrientation:BABYLON.Mesh.DOUBLESIDE},scene,window.earcut);}catch(e){const b=BABYLON.MeshBuilder.CreateBox(n,{width:w,height:h,depth:d},scene);b.bakeTransformIntoVertices(BABYLON.Matrix.Translation(0,-h/2,0));return b;}};
+const DEF=[{name:'mug',cls:1,inst:1,ic:'#EF9F27',box:[[-0.045,0.088],[-0.045,0.045],[0,0.1]]},{name:'mug',cls:1,inst:2,ic:'#D4537E',box:[[-0.045,0.088],[-0.045,0.045],[0,0.1]]},{name:'phone',cls:2,inst:3,ic:'#378ADD',side:'front',box:[[-0.0395,0.0395],[-0.0817,0.0817],[0,0.0155]]},{name:'toy_robot',cls:3,inst:4,ic:'#97C459',box:[[-0.03,0.03],[-0.0225,0.0225],[0,0.11]]},{name:'phone',cls:2,inst:5,ic:'#5DCAA5',side:'back',box:[[-0.0395,0.0395],[-0.0817,0.0817],[0,0.0135]]}];
+// iPhone 18 Pro Max glTF (metres; +Y along the length, +Z out of the screen, camera bump 4.8 mm proud of the back)
+// front up: rests on the bump and the bottom edge, tilted ~2°; back up: lies flat on the screen glass
+const PH={front:{tz:-0.058,ta:Math.atan2(0.0048,0.1397),rx:-Math.PI/2,p:[0,0.0092,0.0817+0.058]},back:{tz:0,ta:0,rx:Math.PI/2,p:[0,0.0043,-0.0817]}};
+const RAD={mug:0.075,phone:0.095,toy_robot:0.05};
+function label(t,col){const p=BABYLON.MeshBuilder.CreatePlane('lb',{width:0.22,height:0.04},scene);const dt=new BABYLON.DynamicTexture('dt',{width:512,height:96},scene,true);dt.hasAlpha=true;const ctx=dt.getContext();ctx.clearRect(0,0,512,96);ctx.font='500 44px Figtree, sans-serif';ctx.fillStyle=col;ctx.textBaseline='middle';ctx.fillText(t,8,48);dt.update();const m=new BABYLON.StandardMaterial('lm',scene);m.diffuseTexture=dt;m.emissiveTexture=dt;m.useAlphaFromDiffuseTexture=true;m.disableLighting=true;m.backFaceCulling=false;p.material=m;p.billboardMode=BABYLON.Mesh.BILLBOARDMODE_ALL;return markG(p);}
+const PROF=[[0,0],[0.040,0],[0.044,0.003],[0.045,0.01],[0.045,0.097],[0.0445,0.0995],[0.043,0.1],[0.0415,0.0995],[0.041,0.097],[0.041,0.009],[0,0.009]];
+function build(o){const g=new BABYLON.TransformNode(o.name+o.inst,scene);const m={sem:flatMat(SEMC[o.cls]),inst:flatMat(o.ic)};const meshes=[];
+const add=(me,mat,x,y,z,desc,noShadow)=>{me.material=mat;me.metadata={rgb:mat,desc,cast:!noShadow};if(desc){me.parent=g;me.position.set(x,y,z);}me.receiveShadows=true;if(!noShadow)sg.addShadowCaster(me);meshes.push(me);return me;};
+if(o.name==='mug'){o.slot='mug'+o.inst;const mat=SM[o.slot];
+add(BABYLON.MeshBuilder.CreateLathe('mb',{shape:PROF.map(p=>new BABYLON.Vector3(p[0],p[1],0)),tessellation:64,sideOrientation:BABYLON.Mesh.DOUBLESIDE},scene),mat,0,0,0,{t:'lathe'});
+const tor=BABYLON.MeshBuilder.CreateTorus('mh',{diameter:0.044,thickness:0.012,tessellation:32},scene);tor.rotation.x=Math.PI/2;add(tor,mat,0.062,0.055,0,{t:'torus'});}
+if(o.name==='phone'){o.slot='phone';const c=PH[o.side];const T=new BABYLON.TransformNode('tilt',scene);T.parent=g;T.position.set(0,0,c.tz);T.rotation.x=c.ta;const M=new BABYLON.TransformNode('model',scene);M.parent=T;M.position.set(...c.p);M.rotation.x=c.rx;o.M=M;o.addMesh=add;}
+if(o.name==='toy_robot'){o.slot='robot';add(extr('rb',0.06,0.04,0.07,0.008),SM.robot,0,0.07,0,{t:'extr',w:0.06,d:0.04,h:0.07,r:0.008});add(extr('rh',0.046,0.045,0.04,0.009),SM.robot,0,0.11,0,{t:'extr',w:0.046,d:0.045,h:0.04,r:0.009});const vp=BABYLON.MeshBuilder.CreateGround('vp',{width:0.036,height:0.022},scene);vp.rotation.x=Math.PI/2;add(vp,visMat,0,0.092,0.0228,{t:'front',w:0.036,h:0.022},true);}
+const lb=label(o.name+' #'+o.inst,'#8a909b');return Object.assign({},o,{g,m,meshes,lb});}
+const OB=DEF.map(build);
+const hp=markG(BABYLON.MeshBuilder.CreateSphere('hp',{diameter:0.016},scene));hp.material=gizMat(COL.img);hp.parent=OB[0].g;hp.position.set(0.084,0.055,0);const HPO=[0.084,0,0.055];
+[[V(0.22,0,0),'#E24B4A'],[V(0,0.22,0),'#639922'],[V(0,0,0.22),'#378ADD']].forEach(([p,c])=>{const l=markG(BABYLON.MeshBuilder.CreateLines('ax',{points:[BABYLON.Vector3.Zero(),p]},scene));l.color=C3(c);});
+const wl=label('world 0,0,0',COL.world);wl.position=V(0.12,-0.04,0.03);
+const dotOff=gizMat('#B4B2A9'),dotOn=gizMat(COL.cam);const dots=[];for(let i=0;i<50;i++){const d=markG(BABYLON.MeshBuilder.CreateSphere('d',{diameter:0.022,segments:6},scene));d.material=dotOff;dots.push(d);}
+const rigG={};['key','fill','rim'].forEach(k=>{const s=markG(BABYLON.MeshBuilder.CreateSphere('lg',{diameter:0.04,segments:8},scene));s.material=gizMat(rig[k].diffuse.toHexString());rigG[k]={s,lb:label(k+' light','#8a909b')};});
+const mainCam=new BABYLON.ArcRotateCamera('main',0.9,1.0,2.4,new BABYLON.Vector3(0,0.12,0),scene);mainCam.minZ=0.01;mainCam.lowerRadiusLimit=0.6;mainCam.upperRadiusLimit=6;mainCam.wheelPrecision=120;mainCam.layerMask=ALL|GIZ;
+const camR=new BABYLON.FreeCamera('render',new BABYLON.Vector3(0,1,1),scene);camR.minZ=0.05;camR.maxZ=40;camR.layerMask=ALL;
+engine.inputElement=cMain;mainCam.attachControl(cMain,true);
+const mainView=engine.registerView(cMain,mainCam);const camView=engine.registerView(cCam,camR);
+// render on demand: each canvas renders only for a few frames after something changes (the IBL shadows need ~40 to converge)
+let dCam=0,dMain=0,looping=false,stageVis=true;
+const ptCovers=()=>!!PT&&rend==='pt'&&mode==='rgb';
+function kick(c=40,m=3){dCam=Math.max(dCam,c);dMain=Math.max(dMain,m);if(!looping&&stageVis&&!document.hidden){looping=true;engine.runRenderLoop(loop);}}
+const ovOpen=()=>$('ovCard').open&&cMain.clientWidth>0;const afterCam=[];
+engine.onBeginFrameObservable.add(()=>{if(!ovOpen())dMain=0;camView.enabled=dCam>0&&!ptCovers();mainView.enabled=dMain>0;});
+function loop(){const v=engine.activeView;if(v){scene.render();const rdy=scene.isReady(false);if(!rdy){dCam=Math.max(dCam,3);dMain=Math.max(dMain,ovOpen()?3:0);}if(v===camView){dCam--;if(rdy){afterCam.splice(0).forEach(f=>f());if(!loadDone&&LT.phone&&LT.hdri&&Object.values(LT).every(t=>t.done||t.id==='gpu')){ltd('gpu');finishLoad();idlePreload();}}}else dMain--;}
+if((dCam<=0||ptCovers())&&dMain<=0||!stageVis||document.hidden){engine.stopRenderLoop(loop);looping=false;}}
+['pointerdown','pointermove','wheel'].forEach(t=>cMain.addEventListener(t,e=>{if(t!=='pointermove'||e.buttons)kick(0,6);},{passive:true}));
+mainCam.onViewMatrixChangedObservable.add(()=>{dMain=Math.max(dMain,2);});
+const mq=matchMedia('(max-width:760px)');function dock(){const on=mq.matches&&stageVis;$('bar').classList.toggle('dock',on);document.body.classList.toggle('docked',on);}
+new IntersectionObserver(es=>{stageVis=es[0].isIntersecting;dock();if(stageVis)kick(40,3);}).observe(document.querySelector('.viewer'));mq.addEventListener('change',dock);
+if(mq.matches){$('fxCard').open=false;}
+$('ovCard').addEventListener('toggle',()=>{sizeViews();kick(0,6);});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)kick(40,3);});
+let frus=null,sky=null,dp=null,ssao=null,ssr=null,ibl=null;
+try{dp=new BABYLON.DefaultRenderingPipeline('dp',true,scene,[camR]);dp.samples=4;dp.fxaaEnabled=true;dp.bloomEnabled=true;dp.bloomThreshold=2.5;dp.bloomWeight=0.1;dp.bloomKernel=48;dp.bloomScale=0.5;dp.imageProcessingEnabled=true;dp.depthOfFieldBlurLevel=BABYLON.DepthOfFieldEffectBlurLevel.Medium;dp.depthOfField.fStop=2.0;}catch(e){dp=null;}
+try{ssao=new BABYLON.SSAO2RenderingPipeline('ssao',scene,{ssaoRatio:0.5,blurRatio:0.5},[camR],true);ssao.radius=0.05;ssao.totalStrength=1.0;ssao.base=0.1;ssao.samples=12;ssao.maxZ=6;ssao.minZAspect=0.5;ssao.expensiveBlur=true;}catch(e){ssao=null;}
+try{ssr=new BABYLON.SSRRenderingPipeline('ssr',scene,[camR],false);ssr.strength=0.7;ssr.reflectionSpecularFalloffExponent=2;ssr.thickness=0.02;ssr.step=0.01;ssr.maxDistance=2;ssr.maxSteps=200;ssr.blurDispersionStrength=0.03;ssr.roughnessFactor=0.2;ssr.isEnabled=false;}catch(e){ssr=null;}
+try{if(BABYLON.IblShadowsRenderPipeline&&BABYLON.IblShadowsRenderPipeline.IsSupported){ibl=new BABYLON.IblShadowsRenderPipeline('ibl',scene,{resolutionExp:6,sampleDirections:2,shadowOpacity:0.85,shadowRemanence:0.75,triPlanarVoxelization:true,ssShadowsEnabled:true,ssShadowSampleCount:8,ssShadowStride:8,shadowRenderSizeFactor:0.75},[camR]);ibl.addShadowReceivingMaterial(Object.values(SM));ibl.onShadowTextureReadyObservable&&ibl.onShadowTextureReadyObservable.add(()=>kick(40,0));ibl.onVoxelizationCompleteObservable&&ibl.onVoxelizationCompleteObservable.add(()=>kick(40,0));}}catch(e){console.warn(e);ibl=null;}
+function castSet(){const list=[];OB.forEach(o=>o.meshes.forEach(me=>{const tr=o.slot&&RES[o.slot]&&RES[o.slot].t>0;if(me.metadata.cast&&!tr)list.push(me);}));return list;}
+function updateCasters(){const L=castSet();OB.forEach(o=>o.meshes.forEach(me=>{if(!me.metadata.cast)return;if(L.includes(me))sg.addShadowCaster(me);else sg.removeShadowCaster(me);}));if(ibl){try{ibl.clearShadowCastingMeshes();ibl.addShadowCastingMesh(L);ibl.updateSceneBounds();ibl.updateVoxelization();}catch(e){}}kick(40,3);}
+const FX={keysh:true,ibls:!!ibl,ssao:!!ssao,pom:true,ssr:false,bloom:true,dof:false,aa:true};
+const FXL=[['keysh','Key-light soft shadows (PCSS)',true],['ibls','HDRI shadows (IBL voxel + screen space)',!!ibl],['ssao','Ambient occlusion (SSAO2)',!!ssao],['pom','Displacement as parallax occlusion',true],['ssr','Screen-space reflections',!!ssr],['bloom','Bloom',!!dp],['dof','Depth of field (f/2, both renderers)',!!dp],['aa','Anti-aliasing (MSAA + FXAA)',!!dp]];
+FXL.forEach(([k,t,ok])=>{const l=document.createElement('label');const c=document.createElement('input');c.type='checkbox';c.id='fx_'+k;c.checked=FX[k]&&ok;c.disabled=!ok;c.onchange=()=>{FX[k]=c.checked;applyFX();if(k==='dof')ptMark('cam');if(k==='pom')applyAll();const nm=t.split(' (')[0];setStatus((c.checked?'Turning on ':'Turning off ')+nm.toLowerCase()+'…','busy');new Promise(r=>afterCam.push(r)).then(()=>setStatus(nm+(c.checked?' on':' off'),'ok'));};l.htmlFor=c.id;l.appendChild(c);l.appendChild(document.createTextNode(t+(ok?'':' (unavailable)')));$('fx').appendChild(l);});
+let mode='rgb',rend='rt';
+function applyFX(){kick(40,0);const lab=mode!=='rgb';const pm=scene.postProcessRenderPipelineManager;
+if(ssao){if(FX.ssao&&!lab)pm.attachCamerasToRenderPipeline('ssao',camR);else pm.detachCamerasFromRenderPipeline('ssao',camR);}
+if(ssr)ssr.isEnabled=FX.ssr&&!lab;
+if(ibl){try{ibl.toggleShadow(FX.ibls&&!lab);}catch(e){}}
+rig.key.shadowEnabled=FX.keysh;
+if(dp){dp.bloomEnabled=FX.bloom&&!lab;dp.depthOfFieldEnabled=FX.dof&&!lab;dp.fxaaEnabled=FX.aa&&!lab;dp.samples=(FX.aa&&!lab)?2:1;dp.imageProcessingEnabled=!lab;}}
+function sizeViews(){const CS=Math.max(120,Math.round($('camBox').clientWidth));cCam.width=cCam.height=Math.round(CS*DPR);$('ov').width=$('ov').height=CS*2;if(cMain.clientWidth>0){cMain.width=Math.round(cMain.clientWidth*DPR_MAIN);cMain.height=Math.round(cMain.clientHeight*DPR_MAIN);}engine.resize();kick(40,3);if(PT)ptResize();drawOv();}
+new ResizeObserver(()=>sizeViews()).observe($('camBox'));
+// ---------- HDRI
+const ENV={};let curEnv=null,loadingName=null;
+// mean radiance of the HDRI (SH band 0), used to size exposure and the rig
+async function envL0(t){try{const sp=await BABYLON.CubeMapToSphericalPolynomialTools.ConvertCubeMapTextureToSphericalPolynomial(t);const sh=BABYLON.SphericalHarmonics.FromPolynomial(sp);const v=(0.2126*sh.l00.x+0.7152*sh.l00.y+0.0722*sh.l00.z)*0.282095;return isFinite(v)&&v>0?v:1;}catch(e){return 1;}}
+const ENVP={},HSZ={royal_esplanade_1k:1676014,venice_sunset_1k:1440400,pedestrian_overpass_1k:1534483,quarry_01_1k:1477951};
+function ensureEnv(name){if(ENV[name]){curEnv=ENV[name];useEnv();return Promise.resolve();}if(ENVP[name])return ENVP[name];loadingName=name;const nice=name.replace('_1k','').replace(/_/g,' ');lt('hdri','HDRI · '+nice,(HSZ[name]/1e6).toFixed(1)+' MB');if(loadDone)setStatus('Loading HDRI '+nice+'…','busy');paintLegend();
+ENVP[name]=fetchBytes(PHC+'HDRIs/hdr/1k/'+name+'.hdr',f=>{ltp('hdri',f);if(loadDone){setStatus('Loading HDRI '+nice+' · '+Math.round(f*100)+'%','busy');setProg(f);}},HSZ[name]).then(toB64).then(b64=>new Promise((res,rej)=>{if(loadDone)setStatus('Building lighting from '+nice+'…','busy');setProg(0);
+const t=new BABYLON.HDRCubeTexture('data:application/octet-stream;base64,'+b64,scene,256,false,true,false,true,async()=>{ENV[name]={tex:t,name,b64,L0:await envL0(t)};loadingName=null;ltd('hdri');if(S&&S.hdri===name){curEnv=ENV[name];useEnv();}paintLegend();res();},m=>rej(new Error(m||'hdr')));})).catch(e=>{delete ENVP[name];loadingName=null;setProg(0);setStatus('HDRI could not load: tap Shuffle to retry','');paintLegend('HDRI could not load.');throw e;});return ENVP[name];}
+function useEnv(){if(!curEnv)return;kick(40,3);scene.environmentTexture=curEnv.tex;if(sky)sky.dispose();sky=scene.createDefaultSkybox(curEnv.tex,true,60,0,false);if(sky){sky.layerMask=ALL|GIZ;sky.isPickable=false;}curMode='';applyLight();update();ptMark('env');if(ibl)try{ibl.updateVoxelization();}catch(e){}}
+// exposure is set from the HDRI's average radiance; the rig is sized against the same number so the ratio stays fixed
+function applyLight(){if(!curEnv||!S)return;const L0=curEnv.L0||1,str=S.strength;
+scene.environmentIntensity=str*HDRI_SHARE;const Eenv=Math.PI*L0*str;const R=S.rig;const Ekey=Eenv*R.keyX;
+['key','fill','rim'].forEach(k=>{const l=rig[k],p=R[k];const P=V(...p.pos),T=V(...S.poi);l.position=P;l.direction=T.subtract(P).normalize();const d=BABYLON.Vector3.Distance(P,T);const E=k==='key'?Ekey:k==='fill'?Ekey/R.ratio:Ekey*R.rimX;l.intensity=E*d*d*BAB_K;l._E=E;l._d=d;rigG[k].s.position=P;rigG[k].lb.position=P.add(new BABYLON.Vector3(0,0.06,0));});
+let Et=Math.PI*L0*str*HDRI_SHARE;['key','fill','rim'].forEach(k=>{const l=rig[k];Et+=l._E*Math.max(0,-l.direction.y);});S.Et=Et;
+// incident meter (grey card on the table), −0.5 EV to hold highlights on near-white tops; one value per scene, so all 50 views match
+ip.exposure=Math.min(4,Math.max(0.1,0.7*Math.PI/Et))*Math.pow(2,+$('ev').value);ptMark('light');kick(40,3);}
+$('ev').addEventListener('input',()=>{$('v_ev').textContent=(+$('ev').value>=0?'+':'')+(+$('ev').value).toFixed(1)+' EV';applyLight();update();});$('v_ev').textContent='+0.0 EV';
+// ---------- map modes
+const MODES=[['rgb','RGB'],['depth','Depth'],['normal','Normals'],['sem','Semantic'],['inst','Instance']];
+const LEG={rgb:'RGB: HDRI at half strength plus a key, fill and rim light fixed in the scene.',depth:'Depth label, rendered clean with no effects. Near = white, far = dark.',normal:'Normals label: surface direction in camera space, geometry only.',sem:'Semantic label: mug = 1, phone = 2, toy_robot = 3, background = 0.',inst:'Instance label: one colour per object, so the two mugs differ.'};
+const segBtn=(host,txt,on)=>{const b=document.createElement('button');b.type='button';b.textContent=txt;b.onclick=on;host.appendChild(b);return b;};
+function setMode(k,btn){if(k===mode)return;mode=k;paintModes();applyFX();drawOv();ptShow();const nm=MODES.find(m=>m[0]===k)[1];if(!(PT&&rend==='pt'&&k==='rgb')){setStatus('Rendering '+nm+'…','busy');busy(btn,new Promise(r=>afterCam.push(r))).then(()=>setStatus(nm+' map','ok'));}}
+MODES.forEach(([k,t])=>{const b=segBtn($('modes'),t,()=>setMode(k,b));b.dataset.k=k;const o=document.createElement('option');o.value=k;o.textContent=t+' map';$('modeSel').appendChild(o);});
+$('modeSel').addEventListener('change',e=>setMode(e.target.value,null));
+[['rt','Real-time'],['pt','Path traced']].forEach(([k,t])=>{const b=segBtn($('rend'),t,()=>{if(rend===k)return;rend=k;paintModes();ptShow();if(k==='pt'&&!(PT&&PT.ready))busy(b,ptReadyP());});b.dataset.k=k;});
+const ptStat={set textContent(t){setStatus(t,t?'busy':'');}};
+function paintLegend(msg){$('legend').textContent=msg||(loadingName?'Loading HDRI '+loadingName+'…':LEG[mode]+(rend==='pt'&&mode!=='rgb'?' Labels come from the real-time pass.':''));}
+function paintModes(){$('modeSel').value=mode;[...$('modes').querySelectorAll('button')].forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===mode));[...$('rend').querySelectorAll('button')].forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===rend));paintLegend();}
+BABYLON.Effect.ShadersStore.lblVertexShader='precision highp float;attribute vec3 position;attribute vec3 normal;uniform mat4 world;uniform mat4 view;uniform mat4 viewProjection;varying vec3 vN;varying float vZ;void main(){vec4 wp=world*vec4(position,1.0);vec4 vp=view*wp;vZ=-vp.z;vN=normalize(mat3(view)*mat3(world)*normal);gl_Position=viewProjection*wp;}';
+BABYLON.Effect.ShadersStore.lblFragmentShader='precision highp float;varying vec3 vN;varying float vZ;uniform float md;void main(){if(md<0.5){float d=1.0-clamp((vZ-0.25)/1.55,0.0,1.0);gl_FragColor=vec4(vec3(d),1.0);}else{gl_FragColor=vec4(normalize(vN)*0.5+0.5,1.0);}}';
+const mkL=md=>{const m=new BABYLON.ShaderMaterial('lbl',scene,'lbl',{attributes:['position','normal'],uniforms:['world','view','viewProjection','md']});m.setFloat('md',md);m.backFaceCulling=false;return m;};
+const depthMat=mkL(0),normMat=mkL(1);
+let curMode='main';
+function applyMode(m){if(curMode===m)return;curMode=m;OB.forEach(o=>o.meshes.forEach(me=>{me.material=m==='sem'?o.m.sem:m==='inst'?o.m.inst:m==='depth'?depthMat:m==='normal'?normMat:me.metadata.rgb;}));table.material=(m==='sem'||m==='inst')?semBg:m==='depth'?depthMat:m==='normal'?normMat:table.metadata.rgb;if(sky)sky.setEnabled(m==='main'||m==='rgb');}
+const clrSem=new BABYLON.Color4(0.173,0.173,0.165,1),clrBlk=new BABYLON.Color4(0,0,0,1),clrNone=new BABYLON.Color4(0,0,0,0);
+scene.onBeforeCameraRenderObservable.add(cam=>{if(cam===camR){applyMode(mode);scene.clearColor=mode==='rgb'?clrNone:(mode==='sem'||mode==='inst')?clrSem:clrBlk;}else{applyMode('main');scene.clearColor=clrNone;}});
+// ---------- scene generation (domain randomisation)
+let S=null,lastSceneP=Promise.resolve();
+function gen(seed){const r=rng(seed*7919+13);const pos=[];OB.forEach(o=>{let p,ok,n=0;const ro=RAD[o.name];do{p=[-0.3+r()*0.6,-0.21+r()*0.42];ok=pos.every(q=>Math.hypot(p[0]-q[0],p[1]-q[1])>ro+q[2]);n++;}while(!ok&&n<400);pos.push([p[0],p[1],ro]);o.x=p[0];o.y=p[1];o.yaw=r()*Math.PI*2;});
+const N=OB.length,focal=Math.round(24+r()*46),poi=[pos.reduce((a,p)=>a+p[0],0)/N,pos.reduce((a,p)=>a+p[1],0)/N,0.03];
+const views=[];for(let i=0;i<50;i++){const az=i/50*Math.PI*2+(r()-0.5)*0.08,el=(10+r()*60)*Math.PI/180,rad=0.5+r()*0.7;views.push({az,el,rad,C:[poi[0]+rad*Math.cos(el)*Math.cos(az),poi[1]+rad*Math.cos(el)*Math.sin(az),poi[2]+rad*Math.sin(el)]});}
+const hdri=HDRS[Math.floor(r()*HDRS.length)],strength=+(0.3+r()*1.7).toFixed(2);r();r();
+for(let i=0;i<8;i++)r();const look={h1:r(),rough1:0.15+r()*0.45,h2:r(),rough2:0.15+r()*0.45,glass:r()<0.35,hr:r()};
+look.y1=0.3+r()*0.4;look.y2=0.3+r()*0.4;look.yr=0.25+r()*0.45;const table=TS[Math.floor(r()*TS.length)].id;
+const a0=views[0].az,ring=(az,el,d)=>[poi[0]+d*Math.cos(el)*Math.cos(az),poi[1]+d*Math.cos(el)*Math.sin(az),poi[2]+d*Math.sin(el)];
+const kEl=(35+r()*25)*Math.PI/180,kAz=a0+(30+r()*30)*Math.PI/180,ratio=+(2+r()*2).toFixed(1);
+const rigS={keyX:+(1+r()*1.5).toFixed(2),ratio,rimX:+(0.3+r()*0.3).toFixed(2),key:{pos:ring(kAz,kEl,1.2)},fill:{pos:ring(a0-(50+r()*30)*Math.PI/180,(15+r()*15)*Math.PI/180,1.4)},rim:{pos:ring(kAz+Math.PI+(r()-0.5)*0.6,(45+r()*20)*Math.PI/180,1.1)}};
+return{focal,poi,views,hdri,strength,look,table,rig:rigS};}
+// ---------- material slots: lookup entry + maps
+let SLOTS={};const RES={};let calib=false;
+function defaults(){const L=S.look;SLOTS={table:{set:S.table,lut:TSI[S.table].lut},mug1:{lut:'Porcelain',tint:'1'},mug2:L.glass?{lut:'Glass (Soda-lime)'}:{lut:'Porcelain',tint:'2'},robot:{lut:'Plastic (PP)',pigment:true}};}
+const tintTo=(h,y)=>{const c=new BABYLON.Color3();BABYLON.Color3.HSVtoRGBToRef(h*360,0.4,1,c);const a=[c.r,c.g,c.b],k=y/lum(a);return a.map(v=>Math.min(1,v*k));};
+function resolve(k){const s=SLOTS[k],L=S.look,e=s.lut?lutGet(s.lut):null;const p={k,lut:s.lut,set:s.set||null,m:0,r:0.5,ior:1.5,t:0,col:[0.8,0.8,0.8],note:''};
+if(e){p.m=e.m;p.r=e.r;p.ior=e.ior||1.5;p.t=e.t;p.col=e.rgb.slice();}
+if(s.tint){const i=s.tint;p.col=tintTo(L['h'+i],L['y'+i]);p.r=L['rough'+i]*0.5;p.note='tinted glaze';}
+if(s.finish!=null){p.r=s.finish;p.note='bead-blasted finish';}
+if(s.pigment){p.t=0;p.col=tintTo(L.hr,L.yr);p.r=0.35;p.note='pigmented, opaque';}
+if(p.set){const ts=TSI[p.set];const k2=(calib&&e)?lum(e.rgb)/lum(ts.mean):1;p.col=ts.mean.map(v=>v*k2);p.k2=k2;p.note=(calib&&e)?`scan ×${k2.toFixed(2)} to match`:'scanned albedo';if(!e){p.m=0;}}
+return p;}
+// texture sets load on demand, once each
+const SETC={};
+const loadImg=u=>new Promise((res,rej)=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>res(i);i.onerror=rej;i.src=u;});
+function loadSet(id){if(SETC[id])return SETC[id];lt('tex','Tabletop · '+TSI[id].name,(TSI[id].kb/1024).toFixed(1)+' MB');const b=PHC+'Textures/jpg/1k/'+id+'/'+id+'_',FN={diff:'diff_1k',nor:'nor_gl_1k',arm:'arm_1k',disp:'disp_1k'};SETC[id]=Promise.all(['diff','nor','arm','disp'].map(f=>loadImg(b+FN[f]+'.jpg'))).then(([al,nor,arm,disp])=>{
+const c=document.createElement('canvas');c.width=nor.width;c.height=nor.height;const x=c.getContext('2d');x.drawImage(nor,0,0);const N=x.getImageData(0,0,c.width,c.height);
+const d=document.createElement('canvas');d.width=c.width;d.height=c.height;const y=d.getContext('2d');y.drawImage(disp,0,0,c.width,c.height);const D=y.getImageData(0,0,c.width,c.height).data;for(let i=0;i<N.data.length;i+=4)N.data[i+3]=D[i];x.putImageData(N,0,0);
+ltd('tex');return{id,al,arm,nh:c,tx:{}};}).catch(e=>{delete SETC[id];throw e;});return SETC[id];}
+const imgTex=(src,gamma,rep)=>{const t=new BABYLON.Texture(src.src||src.toDataURL('image/png'),scene);t.gammaSpace=gamma;t.wrapU=t.wrapV=BABYLON.Texture.WRAP_ADDRESSMODE;t.anisotropicFilteringLevel=16;t.uScale=rep[0];t.vScale=rep[1];t._src=src;t._gamma=gamma;return t;};
+let applyGen=0;
+async function applySlot(k,gen){const p=resolve(k),bm=SM[k];RES[k]=p;
+if(p.set){const nm=TSI[p.set].name;if(loadDone&&!SETC[p.set])setStatus('Downloading '+nm+' maps…','busy');let ts;try{ts=await loadSet(p.set);}catch(e){setStatus(nm+' could not load','');return;}if(gen!==applyGen||SLOTS[k].set!==p.set)return;
+const rep=SLOT_REP[k],key=rep.join('x');if(!ts.tx[key])ts.tx[key]={al:imgTex(ts.al,true,rep),n:imgTex(ts.nh,false,rep),orm:imgTex(ts.arm,false,rep)};const T=ts.tx[key];
+bm.albedoTexture=T.al;bm.bumpTexture=T.n;bm.metallicTexture=T.orm;bm.albedoColor=new BABYLON.Color3(p.k2||1,p.k2||1,p.k2||1);bm.metallic=1;bm.roughness=1;
+bm.useParallax=FX.pom;bm.useParallaxOcclusion=FX.pom;bm.parallaxScaleBias=0.025;}
+else{const [pk,prep]=SLOT_TEX[k];const T=pset(p.t>0?'smudge':pk,prep);
+bm.useParallax=bm.useParallaxOcclusion=false;
+if(p.t>0){bm.albedoTexture=null;bm.bumpTexture=null;bm.metallicTexture=T.orm;bm.albedoColor=BABYLON.Color3.FromArray(p.col);bm.metallic=p.m;bm.roughness=1;}
+else{bm.albedoTexture=T.al;bm.bumpTexture=T.n;bm.bumpTexture.level=k==='robot'?0.8:k.startsWith('mug')?0.35:1;bm.metallicTexture=T.orm;bm.albedoColor=BABYLON.Color3.FromArray(p.col.map((v,i)=>Math.min(1,v/T.mean[i])));bm.metallic=p.m;bm.roughness=Math.min(1.4,p.r/T.rmean);}}
+bm.indexOfRefraction=p.ior;bm._t=p.t;bm.subSurface.isRefractionEnabled=false;
+// real-time glass: alpha-blended with Fresnel reflections kept opaque; the path tracer does true refraction
+if(p.t>0){bm.alpha=1-0.92*p.t;bm.transparencyMode=BABYLON.Material.MATERIAL_ALPHABLEND;bm.useRadianceOverAlpha=true;bm.useSpecularOverAlpha=true;bm.backFaceCulling=false;bm.needDepthPrePass=false;}
+else{bm.alpha=1;bm.transparencyMode=BABYLON.Material.MATERIAL_OPAQUE;bm.backFaceCulling=true;}
+updateCasters();paintSlots();ptMark('mat');kick(40,3);}
+function applyAll(){applyGen++;return Promise.all(Object.keys(SM).map(k=>applySlot(k,applyGen)));}
+// ---------- iPhone model: one download, two instances (front up, back up)
+const b64bytes=b64=>{const bin=atob(b64.trim()),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u;};
+lt('phone','iPhone model','5.1 MB');
+const PHONE=fetchBytes(TEX+'iphone.glb',f=>ltp('phone',f),3860024);
+PHONE.then(bytes=>BABYLON.LoadAssetContainerAsync(bytes,scene,{pluginExtension:'.glb'})).then(ct=>{
+if(ibl)try{ibl.addShadowReceivingMaterial(ct.materials);}catch(e){}
+OB.filter(o=>o.name==='phone').forEach(o=>{const inst=ct.instantiateModelsToScene(n=>n+o.inst,false);inst.rootNodes.forEach(n=>{n.parent=o.M;n.getChildMeshes(false).forEach(me=>{if(!me.getTotalVertices())return;o.addMesh(me,me.material,me.position.x,me.position.y,me.position.z,null);});});});
+const fr=ct.materials.find(m=>m.name==='COLOUR_Cherry_Side_Panel');const c=fr?fr.albedoColor:{r:0.12,g:0.058,b:0.068};
+RES.phone={k:'phone',lut:null,set:null,m:1,r:fr?fr.roughness:0.27,ior:1.5,t:0,col:[c.r,c.g,c.b],note:'anodised aluminium, dyed oxide',model:`glTF model · ${ct.meshes.length} meshes, ${ct.materials.length} materials, ${ct.textures.length} textures`};
+updateCasters();paintSlots();ptMark('scene');update();ltd('phone');}).catch(e=>{console.error(e);ltd('phone');setStatus('iPhone model could not load','');});
+// ---------- maths and numbers panels
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],norm=a=>{const l=Math.hypot(...a);return a.map(v=>v/l);},sub=(a,b)=>a.map((v,i)=>v-b[i]);
+const toW=(o,p)=>{const c=Math.cos(o.yaw),s=Math.sin(o.yaw);return[p[0]*c-p[1]*s+o.x,p[0]*s+p[1]*c+o.y,p[2]];};
+const ov=$('ov').getContext('2d');const f2=a=>a.map(n=>(n>=0?' ':'')+n.toFixed(3)).join(', ');const strong=t=>`<b style="color:var(--ink);font-weight:500">${t}</b>`;
+const crow=(col,t,v)=>`<div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span style="width:22px;height:5px;border-radius:3px;background:${col};flex:none;transform:translateY(-2px)"></span><span style="color:var(--mute);min-width:160px">${t}</span><span style="font-family:var(--font-mono)">${v}</span></div>`;
+const cstep=t=>`<div style="padding-left:32px;color:var(--faint);font-size:13px">↓ ${t}</div>`;
+let cur=null,VIEW=null;
+function update(){const seed=+$('seed').value,vi=+$('view').value-1;let fresh=false;if(!S||S.seed!==seed){S=gen(seed);S.seed=seed;S.views.forEach((v,i)=>dots[i].position=V(...v.C));defaults();fresh=true;}
+$('v_seed').textContent=seed;$('v_view').textContent=(vi+1)+' / 50';$('v_view2').textContent=(vi+1)+' / 50';
+OB.forEach(o=>{o.g.position=V(o.x,o.y,0);o.g.rotation.y=o.yaw;o.lb.position=V(o.x,o.y,0.17);});dots.forEach((d,i)=>d.material=i===vi?dotOn:dotOff);
+if(fresh){curMode='';const sd=seed;lastSceneP=Promise.all([ensureEnv(S.hdri).catch(()=>{}),applyAll()]).then(()=>{if(loadDone&&S.seed===sd)setStatus('Scene '+sd+' ready','ok');});applyLight();ptMark('scene');}
+const VW=S.views[vi],C=VW.C,T=S.poi,f=S.focal;const fw=norm(sub(T,C)),rt=norm(cross(fw,[0,0,1])),dn=cross(fw,rt),up=dn.map(x=>-x),bk=fw.map(x=>-x);
+const fx=f/SW*W,fov=2*Math.atan(SW/2/f);const P=p=>{const q=sub(p,C);const X=dot(q,rt),Y=dot(q,dn),Z=dot(q,fw);return{X,Y,Z,u:fx*X/Z+512,v:fx*Y/Z+512};};
+camR.position=V(...C);camR.upVector=new BABYLON.Vector3(0,1,0);camR.setTarget(V(...T));camR.fov=fov;
+const dist=Math.hypot(...sub(T,C));if(dp){dp.depthOfField.focusDistance=dist*1000;dp.depthOfField.focalLength=f;}
+VIEW={C,T,f,fov,dist};ptMark('cam');kick(40,3);
+if(frus)frus.dispose();const h=Math.tan(fov/2)*0.14,cp=V(...C),fv=V(...fw),rv=V(...rt),uv=V(...up),cc=cp.add(fv.scale(0.14));const k1=cc.add(rv.scale(h)).add(uv.scale(h)),k2=cc.add(rv.scale(-h)).add(uv.scale(h)),k3=cc.add(rv.scale(-h)).add(uv.scale(-h)),k4=cc.add(rv.scale(h)).add(uv.scale(-h));
+frus=markG(BABYLON.MeshBuilder.CreateLineSystem('fr',{lines:[[cp,k1],[cp,k2],[cp,k3],[cp,k4],[k1,k2,k3,k4,k1]]},scene));frus.color=C3(COL.cam);
+const R=S.rig,card=(h,rows)=>`<div class="card"><h3>${h}</h3><dl>${rows.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl></div>`;
+$('spec').innerHTML=card('Camera, view '+(vi+1),[['Elevation',(VW.el*180/Math.PI).toFixed(0)+'° (10–70)'],['Radius',VW.rad.toFixed(2)+' m (0.5–1.2)'],['Lens',f+' mm (24–70)'],['Focus',dist.toFixed(2)+' m']])
++card('Light',[['HDRI',S.hdri.replace('_1k','')+' × '+S.strength+' at 50%'],['Key','×'+R.keyX+' HDRI irradiance'],['Key : fill',R.ratio+' : 1 (2–4)'],['Rim','×'+R.rimX+' key (0.3–0.6)'],['Exposure',ip.exposure.toFixed(2)+' metered']])
++card('Look',[['Tabletop',TSI[S.table].name],['Hard case',S.look.glass?'glass mug #2':'none'],['Glaze roughness',(S.look.rough1*0.5).toFixed(2)+' / '+(S.look.rough2*0.5).toFixed(2)]]);
+const o1=OB[0],Pw=toW(o1,HPO),pc=P(Pw);const vis=pc.Z>0&&pc.u>=0&&pc.u<=W&&pc.v>=0&&pc.v<=W;
+$('chain').innerHTML=crow(COL.obj,'1 Object (pivot 0,0,0)',f2(HPO)+' m')+cstep(`mug #1 at (${o1.x.toFixed(2)}, ${o1.y.toFixed(2)}, 0), turned ${(o1.yaw*180/Math.PI).toFixed(0)}°`)+crow(COL.world,'2 World (table 0,0,0)',f2(Pw)+' m')+cstep('extrinsics of view '+(vi+1))+crow(COL.cam,'3 Camera (lens 0,0,0)',f2([pc.X,pc.Y,pc.Z])+' m')+cstep(`K: fx = ${f}/36 × 1024 = ${Math.round(fx)} px, cx = cy = 512`)+crow(COL.img,'4 Image (top-left 0,0)',pc.Z<=0?'behind camera':`u ${Math.round(pc.u)}, v ${Math.round(pc.v)}${vis?'':' (outside)'} px`);
+const M=[[rt[0],up[0],bk[0],C[0]],[rt[1],up[1],bk[1],C[1]],[rt[2],up[2],bk[2],C[2]],[0,0,0,1]];
+$('tj').textContent=`"fl_x": ${fx.toFixed(1)}, "fl_y": ${fx.toFixed(1)},\n"cx": 512, "cy": 512, "w": 1024, "h": 1024,\n"file_path": "images/view_${String(vi+1).padStart(3,'0')}.png",\n"transform_matrix": [   // camera-to-world\n`+M.map(r=>'  ['+r.map(n=>(n>=0?' ':'')+n.toFixed(3)).join(', ')+']').join(',\n')+'\n]';
+const boxes=[];let rows='';
+OB.forEach(o=>{const cs=[];o.box[0].forEach(a=>o.box[1].forEach(b=>o.box[2].forEach(c=>cs.push(P(toW(o,[a,b,c]))))));const t=P([o.x,o.y,0]);let txt;const rs=RES[o.slot];const col=rs?hex(rs.col):'#888780';
+if(cs.some(p=>p.Z<=0))txt='behind camera';else{const x0=Math.max(0,Math.min(...cs.map(p=>p.u))),x1=Math.min(W,Math.max(...cs.map(p=>p.u))),y0=Math.max(0,Math.min(...cs.map(p=>p.v))),y1=Math.min(W,Math.max(...cs.map(p=>p.v)));if(x1<=x0||y1<=y0)txt='outside image';else{boxes.push({o,col,x0,y0,x1,y1});txt=`box [${Math.round(x0)}, ${Math.round(y0)}, ${Math.round(x1-x0)}, ${Math.round(y1-y0)}]`;}}
+rows+=`<tr><td><span class="sw" style="width:10px;height:10px;background:${col};margin-right:8px"></span>${o.name} #${o.inst}</td><td class="num">${o.cls}</td><td class="num">${o.inst}</td><td class="num">${txt.replace(/^box \[|\]$/g,'')}</td><td class="num">${[t.X,t.Y,t.Z].map(n=>Math.round(n*1000)).join(', ')}</td></tr>`;});
+$('objs').innerHTML=rows;cur={boxes,pc,vis};drawOv();}
+let showOv=true;
+function drawOv(){if(!cur)return;const Wc=$('ov').width,k=Wc/W;ov.clearRect(0,0,Wc,Wc);if(!showOv)return;ov.font='500 20px Figtree, sans-serif';
+ov.strokeStyle='rgba(255,255,255,0.5)';ov.lineWidth=2;ov.setLineDash([8,8]);ov.beginPath();ov.moveTo(Wc/2,0);ov.lineTo(Wc/2,Wc);ov.moveTo(0,Wc/2);ov.lineTo(Wc,Wc/2);ov.stroke();ov.setLineDash([]);
+const tag=(t,x,y)=>{const tw=ov.measureText(t).width;ov.fillStyle='rgba(0,0,0,0.6)';ov.fillRect(x,y-18,tw+10,24);ov.fillStyle='#ffffff';ov.fillText(t,x+5,y);};
+ov.fillStyle=COL.img;ov.beginPath();ov.arc(7,7,7,0,7);ov.fill();tag('0, 0',18,34);tag('cx, cy = 512, 512',Wc/2+6,Wc/2-10);
+if(mode==='rgb'){cur.boxes.forEach(b=>{ov.strokeStyle=b.col;ov.lineWidth=3;ov.strokeRect(b.x0*k,b.y0*k,(b.x1-b.x0)*k,(b.y1-b.y0)*k);tag(b.o.name+' #'+b.o.inst,b.x0*k,Math.max(22,b.y0*k-6));});if(cur.vis){ov.strokeStyle=COL.img;ov.lineWidth=3;ov.beginPath();ov.arc(cur.pc.u*k,cur.pc.v*k,12,0,7);ov.stroke();tag(`u ${Math.round(cur.pc.u)}, v ${Math.round(cur.pc.v)}`,cur.pc.u*k+16,cur.pc.v*k-12);}}}
+$('boxTog').addEventListener('click',e=>{showOv=!showOv;e.currentTarget.setAttribute('aria-pressed',showOv);drawOv();});
+function stepView(d){const v=$('view');v.value=((+v.value-1+d+50)%50)+1;update();}
+function stepSeed(d,btn){const s0=$('seed');s0.value=((+s0.value+d+20)%20);update();busy(btn,lastSceneP);}
+$('vPrev').onclick=$('vPrev2').onclick=()=>stepView(-1);$('vNext').onclick=$('vNext2').onclick=()=>stepView(1);
+$('sPrev').onclick=e=>stepSeed(-1,e.currentTarget);$('sNext').onclick=e=>stepSeed(1,e.currentTarget);
+$('shuffle').onclick=e=>{const cur=+$('seed').value;let n=cur;while(n===cur)n=Math.floor(Math.random()*20);stepSeed(n-cur,e.currentTarget);};
+let sw=null;$('camBox').addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;sw={x:e.clientX,y:e.clientY};});
+$('camBox').addEventListener('pointerup',e=>{if(!sw)return;const dx=e.clientX-sw.x,dy=e.clientY-sw.y;sw=null;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.3)stepView(dx<0?1:-1);});
+$('camBox').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'){stepView(-1);e.preventDefault();}else if(e.key==='ArrowRight'){stepView(1);e.preventDefault();}});
+$('seed').addEventListener('input',update);$('view').addEventListener('input',update);
+// ---------- material table panel
+const SLOTN={table:'Tabletop',mug1:'Mug #1',mug2:'Mug #2',phone:'iPhones #3, #5 (frame)',robot:'Robot shell'};
+function check(p){const s=Math.round(l2s(lum(p.col))*255);if(p.m>=0.5)return s>=180?`<span class="ok">✓ metal ${s}</span>`:`<span class="warn">⚠ metal ${s} &lt; 180</span>`;if(p.t>0)return '<span class="ok">✓ transmissive</span>';return s>=30&&s<=240?`<span class="ok">✓ ${s} in 30–240</span>`:`<span class="warn">⚠ ${s} outside 30–240</span>`;}
+function paintSlots(){$('slotRows').innerHTML=Object.keys(SLOTN).map(k=>{const p=RES[k];if(!p)return'';const ts=p.set?TSI[p.set]:null;const f0=p.m>=0.5?'albedo':(((p.ior-1)/(p.ior+1))**2).toFixed(3);
+const maps=p.model?p.model:ts?`<a href="${ts.src}" target="_blank" rel="noopener" style="color:var(--text-accent)">${ts.name}</a> · colour, normal, AO/rough/metal, displacement`:(p.t>0?'smudge roughness':'procedural detail');
+const sw=ts?`<span class="sw" style="background-image:url(${TEX}tex/${ts.id}/thumb.jpg)"></span>`:`<span class="sw" style="background:${hex(p.col)}"></span>`;
+return`<tr><td>${SLOTN[k]}</td><td>${p.lut||'none (scan only)'}${p.note?` <span style="color:var(--mute)">· ${p.note}</span>`:''}</td><td style="white-space:normal;min-width:180px">${maps}</td><td>${sw}</td><td class="num">${p.col.map(v=>v.toFixed(3)).join(', ')}</td><td class="num">${hex(p.col)}</td><td class="num">${p.set&&!p.lut?'map':p.m}</td><td class="num">${p.set?'map':(+p.r).toFixed(2)}</td><td class="num">${p.ior}</td><td class="num">${f0}</td><td>${check(p)}</td></tr>`;}).join('');paintRefs();}
+// sets grid: thumbnails load lazily, maps only on click
+$('sets').innerHTML=TS.map(t=>`<button type="button" data-id="${t.id}"><img loading="lazy" alt="" src="${TEX}tex/${t.id}/thumb.jpg"><b style="font-weight:500">${t.name}</b><br><small>${t.by} · ${(t.kb/1024).toFixed(1)} MB${t.lut?' · LUT '+t.lut:''}</small></button>`).join('');
+$('sets').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.classList.contains('loading'))return;const k=$('tgt').value,id=b.dataset.id;SLOTS[k]={set:id,lut:TSI[id].lut||(SLOTS[k].set?null:SLOTS[k].lut)};applyGen++;b.classList.add('loading');b.setAttribute('aria-busy','true');applySlot(k,applyGen).then(()=>{toast(TSI[id].name+' applied to '+SLOTN[k]);paintSetSel();}).finally(()=>{b.classList.remove('loading');b.removeAttribute('aria-busy');});});
+function paintSetSel(){const cur=SLOTS[$('tgt').value]&&SLOTS[$('tgt').value].set;[...$('sets').children].forEach(x=>x.classList.toggle('on',x.dataset.id===cur));}
+$('tgt').addEventListener('change',paintSetSel);
+$('calib').addEventListener('change',()=>{calib=$('calib').checked;applyAll().then(()=>toast(calib?'Scans calibrated to measured albedo':'Scans shown as captured'));});
+$('reset').addEventListener('click',e=>{defaults();busy(e.currentTarget,applyAll()).then(()=>{toast('Scene defaults restored');paintSetSel();});});
+[...$('tabs').children].forEach(b=>b.onclick=()=>{[...$('tabs').children].forEach(x=>x.setAttribute('aria-pressed',x===b));$('setsPane').hidden=b.dataset.t!=='sets';$('lutPane').hidden=b.dataset.t!=='lut';if(b.dataset.t==='lut')loadLUT();});
+let lutP=null;function loadLUT(){if(lutP)return lutP;lutP=fetch(TEX+'lut/index.json').then(r=>r.json()).then(j=>{LUT={};j.m.forEach(a=>LUT[a[0]]=[a[1],a[2],a[3],a[4],a[5],a[6]]);paintLUT();return LUT;}).catch(()=>{lutP=null;$('lutList').innerHTML='<p style="padding:10px;margin:0">The table could not load.</p>';});return lutP;}
+function paintLUT(){if(!LUT)return;const q=$('q').value.trim().toLowerCase();const names=Object.keys(LUT).filter(n=>!q||n.toLowerCase().includes(q)||LUT[n][0].toLowerCase().includes(q));
+$('lutList').innerHTML=`<div style="display:grid;grid-template-columns:22px minmax(0,1.4fr) minmax(0,.8fr) repeat(3,minmax(0,.5fr));gap:10px;padding:7px 10px;font-size:12px;color:var(--mute);border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg)"><span></span><span>Material</span><span>Category</span><span>Metal</span><span>Rough</span><span>IOR</span></div>`+names.map(n=>{const a=LUT[n];return`<button type="button" data-n="${n.replace(/"/g,'&quot;')}"><span class="sw" style="background:${hex(a[1])}"></span><span>${n}</span><span class="m">${a[0]}</span><span class="m">${a[2]}</span><span class="m">${a[3]}</span><span class="m">${a[4]??'–'}</span></button>`;}).join('');}
+$('q').addEventListener('input',paintLUT);
+$('lutList').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const k=$('tgt').value;const s=SLOTS[k];SLOTS[k]=s.set&&calib?{set:s.set,lut:b.dataset.n}:{lut:b.dataset.n};applyGen++;busy(b,applySlot(k,applyGen)).then(()=>{toast(b.dataset.n+' applied to '+SLOTN[k]);paintSetSel();});});
+// references for the lookup entries in use, fetched per category on demand
+const REFC={};const refCat=c=>REFC[c]||(REFC[c]=fetch(TEX+'lut/refs-'+c.toLowerCase()+'.json').then(r=>r.json()).catch(()=>({})));
+let refTok=0;async function paintRefs(){const tok=++refTok;const used=[...new Set(Object.values(RES).map(p=>p&&p.lut).filter(Boolean))];const parts=[];
+for(const n of used){const e=lutGet(n);if(!e)continue;const R=(await refCat(e.c))[n]||[];parts.push(`<p style="margin:0 0 8px"><b>${n}</b>: `+R.map(([t,a,u])=>`${a?a+', ':''}${t}${u?` <a href="${u}" target="_blank" rel="noopener">${u.replace(/^https?:\/\//,'')}</a>`:''}`).join(' · ')+'</p>');}
+const sets=[...new Set(Object.values(RES).map(p=>p&&p.set).filter(Boolean))].map(id=>TSI[id]);if(sets.length)parts.push('<p style="margin:0"><b>Texture scans</b>: '+sets.map(t=>`${t.name} by ${t.by} <a href="${t.src}" target="_blank" rel="noopener">${t.src.replace(/^https?:\/\//,'')}</a>`).join(' · ')+'</p>');
+if(tok===refTok)$('refs').innerHTML=parts.join('')||'None.';}
+// ---------- detail tabs
+const dtabs=[...document.querySelectorAll('.dtabs [role=tab]')];
+dtabs.forEach(b=>b.onclick=()=>{dtabs.forEach(x=>{const on=x===b;x.setAttribute('aria-selected',on);$(x.dataset.p).hidden=!on;});});
+// ---------- path tracer (three.js + three-gpu-pathtracer), loaded the first time it is chosen
+let PT=null,ptLoading=false;const ptDirty=new Set();const MAXS=1024;
+function ptMark(w){ptDirty.add(w);}
+const ptWanted=()=>rend==='pt'&&mode==='rgb';
+function ptShow(){const on=ptWanted();cPT.style.visibility=on&&PT?'visible':'hidden';$('fxSet').disabled=rend==='pt';if(on&&!PT)ensurePT();if(!on){setStatus('','');setProg(0);}kick(40,2);drawOv();paintLegend();}
+function ptResize(){const CS=Math.max(120,Math.round($('camBox').clientWidth));PT.renderer.setPixelRatio(Math.min(DPR,1.5));PT.renderer.setSize(CS,CS,false);ptMark('cam');}
+let ptRes=null;const ptP=new Promise(r=>ptRes=r);const ptReadyP=()=>ptP;
+const ptMods=()=>Promise.all([import('three'),import('three-gpu-pathtracer'),import('three/examples/jsm/loaders/RGBELoader.js')]);
+function idlePreload(){if(navigator.connection&&navigator.connection.saveData)return;const go=()=>{const pre=document.createElement('span');pre.id='pre';pre.innerHTML='<span class="spin"></span>Preloading path tracer';$('legend').after(pre);ptMods().then(()=>{pre.innerHTML=ICON_OK+'Path tracer ready';setTimeout(()=>pre.remove(),2500);}).catch(()=>pre.remove());};setTimeout(()=>window.requestIdleCallback?requestIdleCallback(go,{timeout:4000}):go(),1500);}
+async function ensurePT(){if(PT||ptLoading)return;ptLoading=true;setStatus('Loading the path tracer (three.js)…','busy');
+try{const [T,P,R]=await ptMods();setStatus('Preparing the scene for path tracing…','busy');
+const renderer=new T.WebGLRenderer({canvas:cPT,antialias:false,alpha:false});renderer.toneMapping=T.NeutralToneMapping;renderer.outputColorSpace=T.SRGBColorSpace;
+const pt=new P.WebGLPathTracer(renderer);pt.tiles.set(2,2);pt.bounces=8;pt.transmissiveBounces=10;pt.filterGlossyFactor=0.4;pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.dynamicLowRes=true;pt.lowResScale=0.25;
+const tS=new T.Scene();const cam=new P.PhysicalCamera(40,1,0.05,40);cam.filmGauge=36;
+const groups=OB.map(o=>{const g=new T.Group();tS.add(g);return g;});
+const shape=d=>new T.Shape(rrect(d.w,d.d,d.r).map(p=>new T.Vector2(p[0],p[1])));
+const geo=d=>{if(d.t==='lathe')return new T.LatheGeometry(PROF.map(p=>new T.Vector2(p[0],p[1])),64);if(d.t==='torus')return new T.TorusGeometry(0.022,0.006,24,48);if(d.t==='extr'){const g=new T.ExtrudeGeometry(shape(d),{depth:d.h,bevelEnabled:false,curveSegments:6});g.rotateX(Math.PI/2);return g;}if(d.t==='up'){const g=new T.PlaneGeometry(d.w,d.h);g.rotateX(-Math.PI/2);return g;}if(d.t==='front')return new T.PlaneGeometry(d.w,d.h);if(d.t==='box'){const g=new T.BoxGeometry(d.w,d.h,d.d);return g;}};
+const pairs=[];OB.forEach((o,i)=>o.meshes.forEach(me=>{if(!me.metadata.desc)return;const m=new T.Mesh(geo(me.metadata.desc));m.position.set(me.position.x,me.position.y,me.position.z);groups[i].add(m);pairs.push([me,m]);}));
+const [{GLTFLoader}]=await Promise.all([import('three/examples/jsm/loaders/GLTFLoader.js')]);const bytes=await PHONE;const gl=await new Promise((res,rej)=>new GLTFLoader().parse(bytes.buffer.slice(0),'',res,rej));
+// the path tracer merges all geometry: give it plain float attributes (the glTF uses interleaved / quantized ones)
+gl.scene.traverse(o=>{if(!o.isMesh)return;const g=o.geometry;g.morphAttributes={};for(const k of Object.keys(g.attributes)){if(!['position','normal','uv'].includes(k)){g.deleteAttribute(k);continue;}const at=g.attributes[k];if(at.isInterleavedBufferAttribute||at.normalized||!(at.array instanceof Float32Array)){const n=at.count,sz=at.itemSize,arr=new Float32Array(n*sz);for(let i=0;i<n;i++)for(let j=0;j<sz;j++)arr[i*sz+j]=at.getComponent(i,j);g.setAttribute(k,new T.BufferAttribute(arr,sz));}}});
+OB.forEach((o,i)=>{if(o.name!=='phone')return;const c=PH[o.side];const Tn=new T.Group();Tn.position.set(0,0,c.tz);Tn.rotation.x=c.ta;const Mn=new T.Group();Mn.position.set(...c.p);Mn.rotation.x=c.rx;Mn.add(gl.scene.clone(true));Tn.add(Mn);groups[i].add(Tn);});
+const tm=new T.Mesh(geo(table.metadata.desc));tm.position.y=-0.02;tS.add(tm);pairs.push([table,tm]);
+const lights={};['key','fill','rim'].forEach(k=>{const l=new P.PhysicalSpotLight(0xffffff,1,0,1,0.4,2);l.radius=k==='key'?0.06:0.12;l.target=new T.Object3D();tS.add(l);tS.add(l.target);lights[k]=l;});
+const txc=new Map();const ttex=bt=>{if(!bt||!bt._src)return null;let t=txc.get(bt);if(!t){t=bt._src.tagName==='IMG'?new T.Texture(bt._src):new T.CanvasTexture(bt._src);t.colorSpace=bt._gamma?T.SRGBColorSpace:T.NoColorSpace;t.wrapS=t.wrapT=T.RepeatWrapping;t.anisotropy=8;t.needsUpdate=true;txc.set(bt,t);}t.repeat.set(bt.uScale,bt.vScale);return t;};
+const mc=new Map();const tmat=bm=>{let m=mc.get(bm);if(!m){m=new T.MeshPhysicalMaterial({side:T.DoubleSide});mc.set(bm,m);}
+const a=bm.albedoColor;m.color.setRGB(a.r,a.g,a.b);m.map=ttex(bm.albedoTexture);m.normalMap=ttex(bm.bumpTexture);if(bm.bumpTexture)m.normalScale.set(bm.bumpTexture.level,bm.bumpTexture.level);const orm=ttex(bm.metallicTexture);m.roughnessMap=orm;m.metalnessMap=orm;
+m.metalness=bm.metallic??0;m.roughness=Math.min(1,bm.roughness??1);m.ior=bm.indexOfRefraction||1.5;m.transmission=bm._t||0;m.thickness=0;
+m.emissiveMap=ttex(bm.emissiveTexture);const e=bm.emissiveColor||{r:0,g:0,b:0};m.emissive.setRGB(e.r,e.g,e.b);m.emissiveIntensity=bm.emissiveIntensity??1;m.needsUpdate=true;return m;};
+const envC={};const envTex=name=>{const ck=name+ENVFIX.mirror;if(envC[ck])return envC[ck];const e=ENV[name];if(!e)return null;const bin=atob(e.b64),u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+const d=new R.RGBELoader().setDataType(T.FloatType).parse(u8.buffer);if(ENVFIX.mirror){const w=d.width,h=d.height,a=d.data;for(let y=0;y<h;y++)for(let x=0;x<w/2;x++)for(let c=0;c<4;c++){const i=(y*w+x)*4+c,j=(y*w+w-1-x)*4+c,t=a[i];a[i]=a[j];a[j]=t;}}const t=new T.DataTexture(d.data,d.width,d.height,T.RGBAFormat,T.FloatType);t.mapping=T.EquirectangularReflectionMapping;t.colorSpace=T.LinearSRGBColorSpace;t.minFilter=t.magFilter=T.LinearFilter;t.generateMipmaps=false;t.flipY=true;t.needsUpdate=true;envC[ck]=t;return t;};
+PT={T,P,renderer,pt,tS,cam,groups,pairs,tm,lights,tmat,envTex,ready:false};ptResize();['scene','mat','light','env','cam'].forEach(ptMark);requestAnimationFrame(ptFrame);ptShow();}
+catch(e){console.error(e);setStatus('The path tracer could not load; back to real-time','');rend='rt';paintModes();ptRes();}
+ptLoading=false;}
+function ptSync(){const {T,pt,tS,cam,groups,pairs,lights,tmat,envTex}=PT;const need=new Set(ptDirty);ptDirty.clear();
+if(need.has('scene')||need.has('mat')||need.has('light')||need.has('env')||!PT.ready){
+OB.forEach((o,i)=>{groups[i].position.set(o.x,0,-o.y);groups[i].rotation.set(0,o.yaw,0);});
+pairs.forEach(([me,m])=>{m.material=tmat(me.metadata.rgb);});
+['key','fill','rim'].forEach(k=>{const b=rig[k],l=lights[k];l.position.set(b.position.x,b.position.y,b.position.z);const t=V(...S.poi);l.target.position.set(t.x,t.y,t.z);l.color.setRGB(b.diffuse.r,b.diffuse.g,b.diffuse.b);l.intensity=b.intensity/BAB_K;l.angle=b.angle/2;l.penumbra=PEN;l.decay=2;l.castShadow=true;});
+const et=curEnv&&envTex(curEnv.name);tS.environment=et;tS.background=et;tS.environmentRotation.set(0,ENVFIX.rotY,0);tS.backgroundRotation.set(0,ENVFIX.rotY,0);tS.environmentIntensity=S.strength*HDRI_SHARE;tS.backgroundIntensity=S.strength*HDRI_SHARE;
+need.add('cam');}
+if(need.has('cam')&&VIEW){const v=VIEW;cam.fov=v.fov*180/Math.PI;cam.position.set(...V(...v.C).asArray());cam.up.set(0,1,0);cam.lookAt(...V(...v.T).asArray());cam.setFocalLength(v.f);cam.focusDistance=v.dist;cam.fStop=FX.dof?2:1e4;cam.updateProjectionMatrix();}
+PT.renderer.toneMappingExposure=ip.exposure;
+if(!PT.ready||need.has('scene')||need.has('mat')||need.has('light')||need.has('env')){pt.setScene(tS,cam);if(!PT.ready)ptRes();PT.ready=true;}else if(need.has('cam'))pt.setCamera(cam);}
+function ptFrame(){requestAnimationFrame(ptFrame);if(!PT||!ptWanted()||!S||!stageVis||document.hidden)return;if(ptDirty.size){if(!PT.ready)setStatus('Building the ray-tracing structure…','busy');ptSync();}const n=PT.pt.samples;if(n<MAXS){PT.pt.renderSample();setStatus('Path tracing · '+Math.floor(n)+' / '+MAXS+' samples','busy');setProg(n/MAXS);}else{setStatus('Path traced · '+MAXS+' samples','done');setProg(0);}}
+// ---------- start
+sizeViews();paintModes();update();applyFX();lt('gpu','Compiling shaders','');
+kick(60,4);
+}
+}
+</script>
+</body>
+</html>
