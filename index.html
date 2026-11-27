@@ -732,7 +732,7 @@ function rgbe(data,W,H){const head='#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n-Y '+H
 for(let p=0;p<W*H;p++){const r=data[p*3],g=data[p*3+1],b=data[p*3+2],v=Math.max(r,g,b);if(v<1e-32){o+=4;continue;}const e=Math.ceil(Math.log2(v)+1e-9)||0;const f=256/2**e;let E=e;let sc=f;if(v*sc>=256){E++;sc/=2;}out[o++]=Math.min(255,Math.floor(r*sc));out[o++]=Math.min(255,Math.floor(g*sc));out[o++]=Math.min(255,Math.floor(b*sc));out[o++]=E+128;}return out;}
 return{moonPosition,moonPhase,night,extinctionV,linke,perezParams,perezCoef,perezRel,SPEC,zonedToUTC,tzOffsetMin,position,events,airmass,pressure,extra,ineichen,cieRel,sunColor,skyColor,compute,skyMap,rgbe,CIE12};})();
 // ---------- screens that emit: luminance in cd/m² (assumed typical settings), scaled into the scene's light units
-const SCREEN_CD={COLOUR_Cherry_Screen:500,material_36:100,material_47:100,material_48:100}; // iPhone at a typical indoor setting; Vision Pro's outer display is dim
+const SCREEN_CD={COLOUR_Cherry_Screen:375,material_36:100,material_47:100,material_48:100}; // iPhone at 75% of a typical 500 cd/m² indoor setting; Vision Pro's outer display is dim
 const SCR={bab:[],three:[]};let scrT=0;
 function screenGain(){if(typeof LM==='undefined'||LM==='hdri'||!SUNS)return null;return SUNS.night?SUNK:SUNK/110;} // day: radiance units are W/m²·sr, ~110 lm/W
 function applyScreens(){const g=screenGain();SCR.bab.forEach(([m,L])=>{m.emissiveIntensity=g==null?1:L*g;});SCR.three.forEach(([m,L])=>{m.emissiveIntensity=g==null?1:L*g;});if(SCR.three.length&&PT){clearTimeout(scrT);scrT=setTimeout(()=>ptMark('scr'),400);}kick(40,10);}
