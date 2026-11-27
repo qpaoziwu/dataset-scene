@@ -428,7 +428,7 @@ RAW.plastic=makeSet(256,gridH(256,(u,v)=>fbm(n2,u*64,v*64,3)*0.12-0.9*Math.exp(-
 RAW.paper=makeSet(256,gridH(256,(u,v)=>fbm(n3,u*64,v*64,4)),(u,v,h)=>{const b=(0.95+0.05*h)*255;return[b,b,b];},(u,v,h)=>0.9+0.1*h,0.8,2);
 RAW.smudge=makeSet(256,gridH(256,()=>0),()=>[255,255,255],(u,v)=>{const s=fbm(n2,u*6,v*6,5);return 0.03+Math.max(0,s-0.48)*0.9;},0,0);
 // ---------- engine
-const cMain=$('cMain'),cCam=$('cCam'),cPT=$('cPT');
+const cMain=$('cMain'),cCam=$('cCam');let cPT=$('cPT');
 const work=document.createElement('canvas');work.width=work.height=8;
 const engine=new BABYLON.Engine(work,true,{stencil:true,preserveDrawingBuffer:false},true);
 const scene=new BABYLON.Scene(engine);scene.useRightHandedSystem=true;scene.clearColor=new BABYLON.Color4(0,0,0,0);
@@ -718,7 +718,9 @@ if(tok===refTok)$('refs').innerHTML=parts.join('')||'None.';}
 const dtabs=[...document.querySelectorAll('.dtabs [role=tab]')];
 dtabs.forEach(b=>b.onclick=()=>{dtabs.forEach(x=>{const on=x===b;x.setAttribute('aria-selected',on);$(x.dataset.p).hidden=!on;});});
 // ---------- path tracer (three.js + three-gpu-pathtracer), loaded the first time it is chosen
-let PT=null,ptLoading=false;const ptDirty=new Set();const MAXS=1024;
+let PT=null,ptLoading=false,ptLoop=false;const ptDirty=new Set();
+// phones stop sooner: fewer passes, less heat, less time for the GPU watchdog to step in
+const MAXS=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform))?384:1024;
 function ptMark(w){ptDirty.add(w);}
 const ptWanted=()=>rend==='pt'&&mode==='rgb';
 function ptShow(){const on=ptWanted();cPT.style.visibility=on&&PT?'visible':'hidden';$('fxSet').disabled=rend==='pt';if(on&&!PT)ensurePT();if(!on){setStatus('','');setProg(0);}kick(40,2);drawOv();paintLegend();}
@@ -729,15 +731,16 @@ function idlePreload(){if(navigator.connection&&navigator.connection.saveData)re
 const PTK='ds_pt_v2',lsGet=k=>{try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}},lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
 const MOBILE=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform))||(navigator.deviceMemory||8)<=4;
 const lastTry=lsGet(PTK),crashed=lastTry&&Date.now()-lastTry.t<15*60*1000;
-const PT_LITE=MOBILE||!!crashed,PT_TINY=!!(crashed&&lastTry.lite);
+const PT_LITE=MOBILE||!!crashed;let PT_TINY=!!(crashed&&lastTry.lite);
 // a normal page exit clears the marker; only a tab that died mid-build (out of memory) leaves it behind
 addEventListener('pagehide',()=>lsSet(PTK,null));document.addEventListener('visibilitychange',()=>{if(document.hidden)lsSet(PTK,null);});
 async function ensurePT(){if(PT||ptLoading)return;
 ptLoading=true;lsSet(PTK,{t:Date.now(),lite:PT_LITE});if(crashed)toast(PT_TINY?'Retrying path tracing at the smallest memory setting':'Retrying path tracing in low-memory mode');setStatus('Loading the path tracer (three.js)…','busy');
 try{const [T,P,R]=await ptMods();setStatus('Preparing the scene for path tracing…','busy');
+cPT.addEventListener('webglcontextlost',e=>{e.preventDefault();ptLost();},{once:true});
 const renderer=new T.WebGLRenderer({canvas:cPT,antialias:false,alpha:false,powerPreference:PT_LITE?'low-power':'high-performance'});renderer.toneMapping=T.NeutralToneMapping;renderer.outputColorSpace=T.SRGBColorSpace;
 // every map is packed into one texture array at a single size; the path-tracing copies keep only colour, emission and roughness/metal maps (~55), at 1024 px (phones drop the props' roughness/metal maps to fit)
-const pt=new P.WebGLPathTracer(renderer);const TS_=PT_TINY?512:1024;pt.textureSize.set(TS_,TS_);pt.tiles.set(PT_LITE?3:2,PT_LITE?3:2);pt.bounces=PT_TINY?3:PT_LITE?4:8;pt.transmissiveBounces=PT_LITE?4:10;pt.filterGlossyFactor=0.4;pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.dynamicLowRes=true;pt.lowResScale=0.25;
+const pt=new P.WebGLPathTracer(renderer);const TS_=PT_TINY?512:1024;pt.textureSize.set(TS_,TS_);const TL=PT_LITE?4:2;pt.tiles.set(TL,TL);pt.bounces=PT_TINY?2:PT_LITE?3:8;pt.transmissiveBounces=PT_LITE?3:10;pt.filterGlossyFactor=0.4;pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.dynamicLowRes=true;pt.lowResScale=0.25;
 const tS=new T.Scene();const cam=new P.PhysicalCamera(40,1,0.05,40);cam.filmGauge=36;
 const groups=OB.map(o=>{const g=new T.Group();tS.add(g);return g;});
 const shape=d=>new T.Shape(rrect(d.w,d.d,d.r).map(p=>new T.Vector2(p[0],p[1])));
@@ -760,9 +763,14 @@ m.metalness=bm.metallic??0;m.roughness=Math.min(1,bm.roughness??1);m.ior=bm.inde
 m.emissiveMap=ttex(bm.emissiveTexture);const e=bm.emissiveColor||{r:0,g:0,b:0};m.emissive.setRGB(e.r,e.g,e.b);m.emissiveIntensity=bm.emissiveIntensity??1;m.needsUpdate=true;return m;};
 const envC={};const envTex=name=>{const ck=name+ENVFIX.mirror;if(envC[ck])return envC[ck];const e=ENV[name];if(!e)return null;const bin=atob(e.b64),u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
 const d=new R.RGBELoader().setDataType(T.FloatType).parse(u8.buffer);if(ENVFIX.mirror){const w=d.width,h=d.height,a=d.data;for(let y=0;y<h;y++)for(let x=0;x<w/2;x++)for(let c=0;c<4;c++){const i=(y*w+x)*4+c,j=(y*w+w-1-x)*4+c,t=a[i];a[i]=a[j];a[j]=t;}}const t=new T.DataTexture(d.data,d.width,d.height,T.RGBAFormat,T.FloatType);t.mapping=T.EquirectangularReflectionMapping;t.colorSpace=T.LinearSRGBColorSpace;t.minFilter=t.magFilter=T.LinearFilter;t.generateMipmaps=false;t.flipY=true;t.needsUpdate=true;envC[ck]=t;return t;};
-PT={T,P,renderer,pt,tS,cam,groups,pairs,tm,lights,tmat,envTex,ready:false};ptResize();['scene','mat','light','env','cam'].forEach(ptMark);requestAnimationFrame(ptFrame);ptShow();}
+PT={T,P,renderer,pt,tS,cam,groups,pairs,tm,lights,tmat,envTex,ready:false};ptResize();['scene','mat','light','env','cam'].forEach(ptMark);if(!ptLoop){ptLoop=true;requestAnimationFrame(ptFrame);}ptShow();}
 catch(e){console.error(e);setStatus('The path tracer could not load; back to real-time','');rend='rt';paintModes();ptRes();}
 ptLoading=false;}
+// iOS drops a WebGL context it judges too heavy instead of crashing the tab: rebuild once at the lightest setting, then fall back honestly
+function ptLost(){const wasTiny=PT_TINY;try{PT&&PT.pt.dispose&&PT.pt.dispose();PT&&PT.renderer.dispose();}catch(e){}PT=null;ptLoading=false;ptDirty.clear();
+const fresh=cPT.cloneNode(false);cPT.replaceWith(fresh);cPT=fresh;lsSet(PTK,null);setProg(0);
+if(wasTiny){setStatus('The GPU reset twice on this device; showing the real-time view','');rend='rt';paintModes();ptShow();return;}
+PT_TINY=true;toast('The GPU reset; path tracing continues at a lighter setting');if(ptWanted())ensurePT();}
 function ptSync(){const {T,pt,tS,cam,groups,pairs,lights,tmat,envTex}=PT;const need=new Set(ptDirty);ptDirty.clear();
 if(need.has('scene')||need.has('mat')||need.has('light')||need.has('env')||!PT.ready){
 OB.forEach((o,i)=>{const g=groups[i];if(o.hung){if(g.parent!==groups[0])groups[0].add(g);const h=HANG[o.mi-1];g.position.set(...h.p);g.quaternion.set(...h.q);}else{if(g.parent!==tS)tS.add(g);g.position.set(o.x,0,-o.y);g.rotation.set(0,o.yaw,0);}});
