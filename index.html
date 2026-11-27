@@ -118,7 +118,7 @@ details[open]>summary::after{transform:rotate(-135deg) translate(-2px,-2px)}
 .rng label{display:flex;justify-content:space-between;font-size:14px;color:var(--mute)}
 .rng output{font:500 13px var(--mono);color:var(--text)}
 input[type=range]{width:100%;accent-color:var(--accent);min-height:36px;margin:2px 0 0}
-#cMain{display:block;width:100%;height:280px;border-radius:12px;background:var(--bg);margin-top:12px;touch-action:none;outline:none}
+#cMain{display:block;width:100%;height:280px;border-radius:12px;background:var(--bg);margin-top:12px;touch-action:none;outline:none;overscroll-behavior:contain}
 #fx{display:grid;gap:2px;margin-top:10px}
 #fx label,.chk{display:flex;align-items:center;gap:10px;min-height:40px;cursor:pointer;font-size:14px;border-radius:10px;padding:0 6px}
 #fx label:hover{background:var(--bg-3)}
@@ -390,7 +390,7 @@ if(!window.BABYLON){$('legend').textContent='Babylon.js could not load.';$('load
 lt('engine','Babylon.js engine','7 MB');ltd('engine');
 const W=1024,SW=36,DPR=Math.min(1.5,devicePixelRatio),DPR_MAIN=Math.min(1.25,devicePixelRatio);
 const COL={obj:'#ff5a36',world:'#6cb8ff',cam:'#c4f04d',img:'#ffd166'};
-const TEX=window.DS_ASSETS||'https://cdn.jsdelivr.net/gh/qpaoziwu/dataset-scene@0268797730852ce445468014f0a673e4bae43818/assets/';const PHC='https://dl.polyhaven.org/file/ph-assets/';
+const TEX=window.DS_ASSETS||'https://cdn.jsdelivr.net/gh/qpaoziwu/dataset-scene@9e0473f57bd29c2454129645c00aaee6abff0de7/assets/';const PHC='https://dl.polyhaven.org/file/ph-assets/';
 const HDRS=['royal_esplanade_1k','venice_sunset_1k','pedestrian_overpass_1k','quarry_01_1k'];
 BABYLON.Tools.PreprocessUrl=u=>u.replace('https://assets.babylonjs.com/core/blue_noise/',TEX); // IBL shadows' blue-noise texture, bundled (CC0)
 const HDRI_SHARE=0.5;
@@ -487,7 +487,9 @@ const dotOff=gizMat('#B4B2A9'),dotOn=gizMat(COL.cam);const dots=[];for(let i=0;i
 const rigG={};['key','fill','rim'].forEach(k=>{const s=markG(BABYLON.MeshBuilder.CreateSphere('lg',{diameter:0.04,segments:8},scene));s.material=gizMat(rig[k].diffuse.toHexString());rigG[k]={s,lb:label(k+' light','#8a909b')};});
 const mainCam=new BABYLON.ArcRotateCamera('main',0.9,1.0,2.4,new BABYLON.Vector3(0,0.12,0),scene);mainCam.minZ=0.01;mainCam.lowerRadiusLimit=0.6;mainCam.upperRadiusLimit=6;mainCam.wheelPrecision=120;mainCam.layerMask=ALL|GIZ;
 const camR=new BABYLON.FreeCamera('render',new BABYLON.Vector3(0,1,1),scene);camR.minZ=0.05;camR.maxZ=40;camR.layerMask=ALL;
-engine.inputElement=cMain;mainCam.attachControl(cMain,true);
+engine.inputElement=cMain;mainCam.attachControl(cMain,false);
+// wheel and touch on the overview orbit the camera, never the page
+cMain.addEventListener('wheel',e=>e.preventDefault(),{passive:false});cMain.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
 const mainView=engine.registerView(cMain,mainCam);const camView=engine.registerView(cCam,camR);
 // render on demand: each canvas renders only for a few frames after something changes (the IBL shadows need ~40 to converge)
 let dCam=0,dMain=0,looping=false,stageVis=true;
@@ -718,20 +720,28 @@ let PT=null,ptLoading=false;const ptDirty=new Set();const MAXS=1024;
 function ptMark(w){ptDirty.add(w);}
 const ptWanted=()=>rend==='pt'&&mode==='rgb';
 function ptShow(){const on=ptWanted();cPT.style.visibility=on&&PT?'visible':'hidden';$('fxSet').disabled=rend==='pt';if(on&&!PT)ensurePT();if(!on){setStatus('','');setProg(0);}kick(40,2);drawOv();paintLegend();}
-function ptResize(){const CS=Math.max(120,Math.round($('camBox').clientWidth));PT.renderer.setPixelRatio(Math.min(DPR,1.5));PT.renderer.setSize(CS,CS,false);ptMark('cam');}
+function ptResize(){const CS=Math.max(120,Math.round($('camBox').clientWidth));PT.renderer.setPixelRatio(PT_LITE?1:Math.min(DPR,1.5));PT.renderer.setSize(CS,CS,false);ptMark('cam');}
 let ptRes=null;const ptP=new Promise(r=>ptRes=r);const ptReadyP=()=>ptP;
 const ptMods=()=>Promise.all([import('three'),import('three-gpu-pathtracer'),import('three/examples/jsm/loaders/RGBELoader.js')]);
 function idlePreload(){if(navigator.connection&&navigator.connection.saveData)return;const go=()=>{const pre=document.createElement('span');pre.id='pre';pre.innerHTML='<span class="spin"></span>Preloading path tracer';$('legend').after(pre);ptMods().then(()=>{pre.innerHTML=ICON_OK+'Path tracer ready';setTimeout(()=>pre.remove(),2500);}).catch(()=>pre.remove());};setTimeout(()=>window.requestIdleCallback?requestIdleCallback(go,{timeout:4000}):go(),1500);}
-async function ensurePT(){if(PT||ptLoading)return;ptLoading=true;setStatus('Loading the path tracer (three.js)…','busy');
+const PTK='ds_pt_try',lsGet=k=>{try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}},lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
+const MOBILE=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform))||(navigator.deviceMemory||8)<=4;
+const lastTry=lsGet(PTK),crashed=lastTry&&Date.now()-lastTry.t<15*60*1000;
+const PT_LITE=MOBILE||!!crashed,PT_OFF=!!(crashed&&lastTry.lite);
+async function ensurePT(){if(PT||ptLoading)return;
+if(PT_OFF){setStatus('Path tracing ran out of memory on this device last time. Real-time view only.','');rend='rt';paintModes();ptShow();ptRes();return;}
+ptLoading=true;lsSet(PTK,{t:Date.now(),lite:PT_LITE});if(crashed)toast('Retrying path tracing in low-memory mode');setStatus('Loading the path tracer (three.js)…','busy');
 try{const [T,P,R]=await ptMods();setStatus('Preparing the scene for path tracing…','busy');
-const renderer=new T.WebGLRenderer({canvas:cPT,antialias:false,alpha:false});renderer.toneMapping=T.NeutralToneMapping;renderer.outputColorSpace=T.SRGBColorSpace;
-const pt=new P.WebGLPathTracer(renderer);pt.tiles.set(2,2);pt.bounces=8;pt.transmissiveBounces=10;pt.filterGlossyFactor=0.4;pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.dynamicLowRes=true;pt.lowResScale=0.25;
+const renderer=new T.WebGLRenderer({canvas:cPT,antialias:false,alpha:false,powerPreference:PT_LITE?'low-power':'high-performance'});renderer.toneMapping=T.NeutralToneMapping;renderer.outputColorSpace=T.SRGBColorSpace;
+// every material texture is packed into one texture array at textureSize: 1024 px × ~90 maps was ~380 MB of GPU memory, more than a phone tab may use
+const pt=new P.WebGLPathTracer(renderer);pt.textureSize.set(PT_LITE?256:512,PT_LITE?256:512);pt.tiles.set(PT_LITE?3:2,PT_LITE?3:2);pt.bounces=PT_LITE?4:8;pt.transmissiveBounces=PT_LITE?4:10;if(PT_LITE)pt.renderScale=0.6;pt.filterGlossyFactor=0.4;pt.minSamples=1;pt.renderDelay=0;pt.fadeDuration=0;pt.dynamicLowRes=true;pt.lowResScale=0.25;
 const tS=new T.Scene();const cam=new P.PhysicalCamera(40,1,0.05,40);cam.filmGauge=36;
 const groups=OB.map(o=>{const g=new T.Group();tS.add(g);return g;});
 const shape=d=>new T.Shape(rrect(d.w,d.d,d.r).map(p=>new T.Vector2(p[0],p[1])));
 const geo=d=>{if(d.t==='lathe')return new T.LatheGeometry(PROF.map(p=>new T.Vector2(p[0],p[1])),64);if(d.t==='torus')return new T.TorusGeometry(0.022,0.006,24,48);if(d.t==='extr'){const g=new T.ExtrudeGeometry(shape(d),{depth:d.h,bevelEnabled:false,curveSegments:6});g.rotateX(Math.PI/2);return g;}if(d.t==='up'){const g=new T.PlaneGeometry(d.w,d.h);g.rotateX(-Math.PI/2);return g;}if(d.t==='front')return new T.PlaneGeometry(d.w,d.h);if(d.t==='box'){const g=new T.BoxGeometry(d.w,d.h,d.d);return g;}};
 const pairs=[];OB.forEach((o,i)=>o.meshes.forEach(me=>{if(!me.metadata.desc)return;const m=new T.Mesh(geo(me.metadata.desc));m.position.set(me.position.x,me.position.y,me.position.z);groups[i].add(m);pairs.push([me,m]);}));
-const [{GLTFLoader}]=await Promise.all([import('three/examples/jsm/loaders/GLTFLoader.js')]);setStatus('Preparing the glTF models for path tracing…','busy');const parse=p=>p.then(bytes=>new Promise((res,rej)=>new GLTFLoader().parse(bytes.buffer.slice(0),'',res,rej)));const [gl,glH,glA]=await Promise.all([parse(PHONE),parse(HOLDER),parse(VISION)]);
+const [{GLTFLoader}]=await Promise.all([import('three/examples/jsm/loaders/GLTFLoader.js')]);// path-tracing copies of the models were converted offline (plain float attributes, simplified, 256 px maps), and load one at a time to keep peak memory low on phones
+const loader=new GLTFLoader();let pn=0;const parse=async u=>{setStatus('Loading path-tracing models · '+(++pn)+' / 3','busy');const b=await fetchBytes(u);return await new Promise((res,rej)=>loader.parse(b.buffer,'',res,rej));};const gl=await parse(TEX+'iphone_pt.glb'),glH=await parse(TEX+'holder_pt.glb'),glA=await parse(TEX+'visionpro_pt.glb');setStatus('Preparing the scene for path tracing…','busy');
 // the path tracer merges all geometry: give it plain float attributes (the glTF uses interleaved / quantized ones)
 [gl,glH,glA].forEach(G=>G.scene.traverse(o=>{if(!o.isMesh)return;const g=o.geometry;g.morphAttributes={};for(const k of Object.keys(g.attributes)){if(!['position','normal','uv'].includes(k)){g.deleteAttribute(k);continue;}const at=g.attributes[k];if(at.isInterleavedBufferAttribute||at.normalized||!(at.array instanceof Float32Array)){const n=at.count,sz=at.itemSize,arr=new Float32Array(n*sz);for(let i=0;i<n;i++)for(let j=0;j<sz;j++)arr[i*sz+j]=at.getComponent(i,j);g.setAttribute(k,new T.BufferAttribute(arr,sz));}}}));
 OB.forEach((o,i)=>{if(o.name!=='phone')return;const c=PH[o.side];const Tn=new T.Group();Tn.position.set(0,0,c.tz);Tn.rotation.x=c.ta;const Mn=new T.Group();Mn.position.set(...c.p);Mn.rotation.x=c.rx;Mn.add(gl.scene.clone(true));Tn.add(Mn);groups[i].add(Tn);});
@@ -758,7 +768,7 @@ need.add('cam');}
 if(need.has('cam')&&VIEW){const v=VIEW;cam.fov=v.fov*180/Math.PI;cam.position.set(...V(...v.C).asArray());cam.up.set(0,1,0);cam.lookAt(...V(...v.T).asArray());cam.setFocalLength(v.f);cam.focusDistance=v.dist;cam.fStop=FX.dof?2:1e4;cam.updateProjectionMatrix();}
 PT.renderer.toneMappingExposure=ip.exposure;
 if(!PT.ready||need.has('scene')||need.has('mat')||need.has('light')||need.has('env')){pt.setScene(tS,cam);if(!PT.ready)ptRes();PT.ready=true;}else if(need.has('cam'))pt.setCamera(cam);}
-function ptFrame(){requestAnimationFrame(ptFrame);if(!PT||!ptWanted()||!S||!stageVis||document.hidden)return;if(ptDirty.size){if(!PT.ready)setStatus('Building the ray-tracing structure…','busy');ptSync();}const n=PT.pt.samples;if(n<MAXS){PT.pt.renderSample();setStatus('Path tracing · '+Math.floor(n)+' / '+MAXS+' samples','busy');setProg(n/MAXS);}else{setStatus('Path traced · '+MAXS+' samples','done');setProg(0);}}
+function ptFrame(){requestAnimationFrame(ptFrame);if(!PT||!ptWanted()||!S||!stageVis||document.hidden)return;if(ptDirty.size){if(!PT.ready)setStatus('Building the ray-tracing structure…','busy');ptSync();}const n=PT.pt.samples;if(n>=16&&lsGet(PTK))lsSet(PTK,null);if(n<MAXS){PT.pt.renderSample();setStatus('Path tracing · '+Math.floor(n)+' / '+MAXS+' samples','busy');setProg(n/MAXS);}else{setStatus('Path traced · '+MAXS+' samples','done');setProg(0);}}
 // ---------- start
 sizeViews();paintModes();update();applyFX();lt('gpu','Compiling shaders','');
 kick(60,4);
